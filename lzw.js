@@ -1,4 +1,17 @@
-console.log("foo");
+var octetsToString = function(octets) {
+  var result = [];
+  for(var i = 0; i < octets.length; i++) {
+    result.push(String.fromCharCode(octets[i] & 0xFF));
+  }
+  return result.join(""); 
+};
+var stringToOctets = function(string) {
+  var result = [];
+  for(var i = 0; i < string.length; i++)
+    result.push(string.charCodeAt(i) & 0xFF);
+  return result;
+}
+
 var log2Ceil = function(n) {
   if(n < 2)
     return 1;
@@ -11,6 +24,9 @@ var CodeTable = function(nRoots) {
   this.codes = {};
   this.decodes = [];
   this.bitLength = log2Ceil(nRoots) + 1; 
+  this.clear = 1 << (this.bitLength - 1);
+  this.stop = this.clear + 1;
+  this.overflow = 1 << this.bitLength;
   this._addRoots();
 };
 
@@ -20,7 +36,7 @@ CodeTable.prototype._addRoots = function() {
     this.codes[sample] = i;
     this.decodes[i] = sample;
   }
-  this.nextCode = this.stopCode() + 1;
+  this.nextCode = this.stop + 1;
 };
 
 CodeTable.prototype.clear = function() {
@@ -31,31 +47,17 @@ CodeTable.prototype.clear = function() {
  
 }
 
-CodeTable.prototype.clearCode = function() {
-  return 1 << (this.bitLength - 1);
-};
-
-CodeTable.prototype.stopCode = function() {
-  return this.clearCode() + 1;
-};
-
 CodeTable.prototype.newCode = function(sampleString) {
-  if( (stop - 1) << 1 <= this.nextCode) {
-    this.bitLength++;
+  if(this.nextCode == this.overflow) {
     if(this.bitLength > 12)
       throw "over length";
-    this.nextCode = this.stopCode() + 1;
+    this.bitLength++;
+    this.overflow = 1 << this.bitLength;
   }
  //console.log([asHex(sampleString), this.nextCode]);
   this.codes[sampleString] = this.nextCode;
   this.decodes[this.nextCode] = sampleString;
-  var stop = this.stopCode();
-  if(this.nextCode < stop) {
-    this.nextCode = stop + 1;
-  } else {
-    this.nextCode++;
-  }
-  //console.log(this.bitLength);
+  this.nextCode++;
 };
 
 CodeTable.prototype.encode = function(sampleString) {
@@ -70,16 +72,17 @@ CodeTable.prototype.bits = function() {
   return this.bitLength;
 };
 
-var ImageDecoder = function(minCodeSize) {
+var LzwEncoder = function(minCodeSize) {
   this.table = new CodeTable(1 << minCodeSize);
 }
 
-ImageDecoder.prototype.encode = function(string) {
+LzwEncoder.prototype.encode = function(string) {
   var codes = this.generateCodes(new ByteStream(string));
-  return this.codesToOctets(codes);
+  console.log(codes);
+  return octetsToString(this.codesToOctets(codes));
 };
 
-ImageDecoder.prototype.generateCodes = function(stream) {
+LzwEncoder.prototype.generateCodes = function(stream) {
   var table = this.table;
   var codes = [];
   var prefix = "";
@@ -98,15 +101,15 @@ ImageDecoder.prototype.generateCodes = function(stream) {
   if(prefix.length > 0) {
     codes.push(table.encode(prefix), table.bits());
   }
-  codes.push(table.stopCode(), table.bits());
+  codes.push(table.stop, table.bits());
   return codes;
 };
 
-ImageDecoder.prototype.codesToOctets = function(codes) {
+LzwEncoder.prototype.codesToOctets = function(codes) {
   if(codes.length % 2 != 0)
     throw "Invalid code sequence";
   var push = Array.prototype.push;
-  var b = new BitAccumulator(8);
+  var b = new BitAccumulatorBE(8);
   var bytes = [];
   for(var i = 0; i < codes.length / 2; i++) {
     var code = codes[2*i];
@@ -119,38 +122,4 @@ ImageDecoder.prototype.codesToOctets = function(codes) {
   }
   push.apply(bytes, b.flush());
   return bytes;
-};
-
-ImageDecoder.prototype.decode = function(stream) {
-  var table = this.table;
-  var samples = [];
-  var old = null;
-  out: while(true) {
-    var blockSize = stream.get();
-    if(blockSize < 0 || blockSize > 255)
-      throw "bad block size";
-    var bits = new BitStream(stream.getRaw(blockSize));
-    while(bits.remaining() >= table.bits()) {
-      var code = bits.get(table.bits());
-      console.log([code, table.bits()]);
-      if(code == table.clearCode()) {
-        table.clear();
-        old = null;
-      } else if(code == table.stopCode()) {
-        break out;
-      } else {
-        var chunk = table.decode(code);
-        if(chunk == null)
-          throw "bad decode";
-        samples.push(chunk);
-        if(old != null) {
-          var newEntry = table.decode(old) + chunk.charAt(0);
-          if(!table.encode(newEntry))
-            table.newCode(newEntry);
-        }
-        old = code;
-      }
-    }
-  }
-  return samples.join("");
 }; 
