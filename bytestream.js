@@ -31,14 +31,15 @@ ByteStream.prototype.getRaw = function(bytes) {
     return result;
   }
   var utf = this.getUtf8(bytes);
-  this.start += bytes;
   return toBytes(utf);
 };
 
-ByteStream.prototype.unget = function() {
-  if(this.start == 0)
+ByteStream.prototype.unget = function(bytes) {
+  if(bytes == null)
+    bytes = 1;
+  if(this.start < bytes)
     throw "unget beyond beginning";
-  this.start--;
+  this.start -= bytes;
 };
 
 ByteStream.prototype.get = function(bytes) {
@@ -123,11 +124,10 @@ var BlockReader = function(stream) {
   this.block = null;
 }
 
-BlockReader.prototype.read = function() {
+BlockReader.prototype.get = function() {
   if(this.block === null || !this.block.remaining()) {
     var length = this.stream.get();
     this.block = new ByteStream(this.stream.getRaw(length));
-    console.log("Read sub-block with length " + length);
   }
   if(!this.block.remaining()) {
     this.stream = null;

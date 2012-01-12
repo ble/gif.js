@@ -85,7 +85,7 @@ var decodeImageTable = function(stream, pixelCount) {
   var lzw = "";
   var destination = []
   var result = [];
-  var decoder = new LzwReader(stream, true, minCodeSize); 
+  var decoder = new LzwReader(new BlockReader(stream), true, minCodeSize); 
 
   var pixels = [];
   var tmp = [];
@@ -128,7 +128,12 @@ var decodeGraphicControl = function(stream) {
 decodeGraphicControl.label = 0xF9;
 
 var decodeComment = function(stream) {
-  throw "comments unimplemented";
+  var length;
+  var comment = "";
+  while(length = stream.get()) {
+    comment += stream.getRaw(length);
+  }
+  return comment;
 };
 decodeComment.label = 0xFE;
 
@@ -138,7 +143,15 @@ var decodePlainText = function(stream) {
 decodePlainText.label = 0x01;
 
 var decodeApplicationExtension = function(stream) {
-  throw "application extension unimplemented";
+  var length = stream.get();
+  var appIdCode = stream.getRaw(length);
+  console.log("Application extension <<" + appIdCode + ">>");
+  length = stream.get();
+  while(length > 0) {
+    var dataSkip = stream.getRaw(length);
+    length = stream.get();
+  };
+  return appIdCode;
 };
 decodeApplicationExtension.label = 0xFF; 
 

@@ -4,7 +4,7 @@ var decoderInvalidCode = 0xFFFF;
 var flushBuffer = 1 << maxWidth;
 
 var LzwReader = function(stream, littleEndian, literalWidth) {
-  this.stream = new BlockReader(stream);
+  this.stream = stream;
   if(littleEndian)
     this._read = this.readLSB.bind(this);
   else
@@ -29,7 +29,7 @@ var LzwReader = function(stream, littleEndian, literalWidth) {
 
 LzwReader.prototype.readLSB = function() {
   while(this.nBits < this.width) {
-    var x = this.stream.read();
+    var x = this.stream.get();
     if(x === null) {
       return null;
     }
@@ -46,7 +46,7 @@ LzwReader.prototype.readLSB = function() {
 
 LzwReader.prototype.readMSB = function() {
   while(this.nBits < this.width) {
-    var x = this.stream.read();
+    var x = this.stream.get();
     if(x === null) {
       return null;
     } 

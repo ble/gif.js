@@ -28,8 +28,11 @@
       var test = function() {
         gifdata = getFile("bwanim.gif");
         console.log(gifdata);
+        now = Date.now();
         gifobj = decodeGif(gifdata);
         console.log(gifobj);
+        duration = Date.now() - now;
+        console.log(duration / 1000);
       };
 
       test();
