@@ -1,0 +1,48 @@
+
+var maxWidth = 12;
+var decoderInvalidCode = 0xFFFF;
+var flushBuffer = 1 << maxWidth;
+
+var LzwReader = function(stream, littleEndian, literalWidth) {
+  this.stream = stream;
+  if(littleEndian)
+    this.read = this.readLSB.bind(this);
+  else
+    this._read = this.readMSB.bind(this);
+  this.literalWidth = literalWidth;
+  this.width = 1 + this.literalWidth;
+  this.clear = 1 << this.literalWidth;
+  this.eof = this.clear + 1;
+  this.hi = this.clear + 1;
+  this.overflow = 1 << this.width;
+  this.last = decoderInvalidCode;
+  this.suffix = new Array[1 << maxWidth];
+  this.prefix = new Array[1 << maxWidth];
+
+  this.output = new Array[2 * 1 << maxWidth];
+  //this.o;
+  this.toRead = [];
+  //this.err;
+};
+
+LzwReader.prototype.readLSB = function() {
+};
+
+LzwReader.prototype.read = function(dest) {
+  while(true) {
+    if(this.toRead.length > 0) {
+      dest.splice.apply(dest, 0, this.toRead.length, this.toRead);
+      var n = this.toRead.length;
+      this.toRead = [];
+      return n;
+    }
+    if(this.err) {
+      return -1;
+    }
+    this.decode();
+  }
+};
+
+LzwReader.prototype.decode = function() {
+
+};
