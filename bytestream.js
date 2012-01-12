@@ -42,10 +42,12 @@ ByteStream.prototype.unget = function() {
 };
 
 ByteStream.prototype.get = function(bytes) {
+  var noArgs = bytes == null;
+  bytes = noArgs ? 1 : bytes;
   if(this.start + bytes > this.end)
     throw "read beyond end";
   var result;
-  if(bytes != null) {
+  if(!noArgs) {
     result = [];
     for(var i = 0; i < bytes; i++) {
       result.push(this.str.charCodeAt(this.start) & 0xFF);
@@ -59,7 +61,7 @@ ByteStream.prototype.get = function(bytes) {
 };
 
 ByteStream.prototype.remaining = function() {
-  return this.end - this.start;
+  return Math.max(0, this.end - this.start);
 }
 
 ByteStream.prototype.get_littleEndian = function(bytes) {
@@ -118,18 +120,22 @@ BitStream.prototype.get = function(bits) {
 
 var BlockReader = function(stream) {
   this.stream = stream;
-  this.length = null;
+  this.block = null;
 }
 
 BlockReader.prototype.read = function() {
-  if(this.length === null) {
-    this.length = stream.get();
+  if(this.block === null || !this.block.remaining()) {
+    var length = this.stream.get();
+    this.block = new ByteStream(this.stream.getRaw(length));
+    console.log("Read sub-block with length " + length);
   }
-  if(this.length == 0) {
-    this.length = null;
+  if(!this.block.remaining()) {
+    this.stream = null;
     return null;
   } else {
-    this.length--;
-    return stream.get();
+    var result = this.block.get();
+    if(!this.block.remaining())
+      this.block = null;
+    return result;
   }
 };

@@ -4,7 +4,7 @@ var decoderInvalidCode = 0xFFFF;
 var flushBuffer = 1 << maxWidth;
 
 var LzwReader = function(stream, littleEndian, literalWidth) {
-  this.stream = stream;
+  this.stream = new BlockReader(stream);
   if(littleEndian)
     this._read = this.readLSB.bind(this);
   else
@@ -16,21 +16,24 @@ var LzwReader = function(stream, littleEndian, literalWidth) {
   this.hi = this.clear + 1;
   this.overflow = 1 << this.width;
   this.last = decoderInvalidCode;
-  this.suffix = new Array[1 << maxWidth];
-  this.prefix = new Array[1 << maxWidth];
+  this.suffix = new Array(1 << maxWidth);
+  this.prefix = new Array(1 << maxWidth);
 
-  this.output = new Array[2 * 1 << maxWidth];
-  //this.o;
+  this.output = new Array(2 * 1 << maxWidth);
+  this.o = 0;
   this.toRead = [];
   //this.err;
-  this.nBits = 8;
+  this.nBits = 0;
   this.bits = 0;
 };
 
 LzwReader.prototype.readLSB = function() {
   while(this.nBits < this.width) {
-    var x = this.stream.get();
-    if(!(x >= 0 && x < 255))
+    var x = this.stream.read();
+    if(x === null) {
+      return null;
+    }
+    if(!(x >= 0 && x <= 255))
       throw "bad read";
     this.bits = this.bits | (x << this.nBits);
     this.nBits += 8;
@@ -43,7 +46,10 @@ LzwReader.prototype.readLSB = function() {
 
 LzwReader.prototype.readMSB = function() {
   while(this.nBits < this.width) {
-    var x = this.stream.get();
+    var x = this.stream.read();
+    if(x === null) {
+      return null;
+    } 
     if(!(x >= 0 && x < 255))
       throw "bad read";
     this.bits = this.bits | (x << (24 - this.nBits));
@@ -58,8 +64,9 @@ LzwReader.prototype.readMSB = function() {
 LzwReader.prototype.read = function(dest) {
   while(true) {
     if(this.toRead.length > 0) {
-      dest.splice.apply(dest, 0, this.toRead.length, this.toRead);
       var n = this.toRead.length;
+      args = [0, n].concat(this.toRead);
+      dest.splice.apply(dest, args);
       this.toRead = [];
       return n;
     }
@@ -73,10 +80,13 @@ LzwReader.prototype.read = function(dest) {
 LzwReader.prototype.decode = function() {
   while(true) {
     var code = this._read();
+    if(code === null) {
+      code = this.eof;
+    }
     if(code < this.clear) {
       this.output[this.o] = code & 0xFF;
       this.o++;
-      if(d.last != decoderInvalidCode) {
+      if(this.last != decoderInvalidCode) {
         this.suffix[this.hi] = code & 0xFF;
         this.prefix[this.hi] = this.last;
       }
@@ -92,7 +102,7 @@ LzwReader.prototype.decode = function() {
       return;
     } else if(code <= this.hi) {
       var c = code;
-      var i = d.output.length - 1;
+      var i = this.output.length - 1;
       if(code == this.hi) {
         c = this.last;
         while(c >= this.clear) {
@@ -109,7 +119,8 @@ LzwReader.prototype.decode = function() {
       }
       this.output[i] = c & 0xFF;
       var end = this.output.slice(i);
-      this.output.splice.apply(this.output, end.length, end);
+      var args = [this.o, end.length].concat(end);
+      this.output.splice.apply(this.output, args);
       this.o += end.length;
       if(this.last != decoderInvalidCode) {
         this.suffix[this.hi] = c & 0xFF;
@@ -129,9 +140,13 @@ LzwReader.prototype.decode = function() {
       }
     }
     if(this.o >= flushBuffer) {
-      this.toRead = this.output.slice(0, this.o);
-      this.o = 0;
+      this.flush();
       return;
     }
   }
 };
+
+LzwReader.prototype.flush = function() {
+  this.toRead = this.output.slice(0, this.o);
+  this.o = 0;
+}

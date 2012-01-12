@@ -24,6 +24,8 @@ var decodeGif = function(gifData) {
     } else if(sep == imageSeparator) {
       var descriptor = decodeImageDescriptor(stream);
       gif.blocks.push(descriptor);
+      var pixels = decodeImageTable(stream, descriptor.width*descriptor.height);
+      gif.blocks.push(pixels);
     }
   }
   return gif;
@@ -78,32 +80,24 @@ var decodeImageDescriptor = function(stream) {
   return id;
 };
 
-var decodeImageTable = function(stream) {
-  var it = {};
+var decodeImageTable = function(stream, pixelCount) {
   var minCodeSize = stream.get();
   var lzw = "";
   var destination = []
   var result = [];
-  var blockSize = stream.get();
-  var decoder = new LzwReader(null, true, minCodeSize);
-  while(blockSize > 0) {
-    lzw += stream.getRaw(blockSize);
-    if(decoder.stream) {
-      decoder.stream.str = lzw;
-      decoder.stream.end = lzw.length;
-    } else {
-      decoder.stream = new ByteStream(lzw);
-    }
-    var count = decoder.read(destination);
-    result = result.concat(destination);
-    destination = [];
-    if(decoder.err == "eof")
-      break;
-    if(decoder.err)
-      throw decoder.err;
+  var decoder = new LzwReader(stream, true, minCodeSize); 
+
+  var pixels = [];
+  var tmp = [];
+  var count = 0;
+  while(count = decoder.read(tmp) > 0) {
+    pixelCount -= count;
+    pixels = pixels.concat(tmp);
+    tmp = []; 
+//    if(pixelCount <= 0)
+//      break;
   }
-  var iDecoder = new ImageDecoder(minCodeSize);
-  return iDecoder.decode(stream);
+  return pixels;
 };
 
 var decodeImageDataBlock = function(stream, iDecoder) {
