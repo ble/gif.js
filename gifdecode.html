@@ -11,12 +11,16 @@
         }
         return result.join("");
       };
-      var getFile = function(fname) {
+      var getFile = function(fname, callback) {
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", fname, false);
+        xhr.onreadystatechange = function() {
+          if(xhr.readyState === 4 && xhr.status === 200) {
+            callback(xhr.responseText);
+          }
+        };
+        xhr.open("GET", fname);
         xhr.overrideMimeType('text/plain; charset=x-user-defined'); 
         xhr.send();
-        return xhr.responseText;
       };
         var charCodes = function(s) {
         var result = [];
@@ -26,13 +30,14 @@
         return result
       }
       var test = function() {
-        gifdata = getFile("bwanim.gif");
-        console.log(gifdata);
-        now = Date.now();
-        gifobj = decodeGif(gifdata);
-        console.log(gifobj);
-        duration = Date.now() - now;
-        console.log(duration / 1000);
+        gifdata = getFile("bwanim.gif", function(gifdata) {
+          console.log(gifdata);
+          now = Date.now();
+          gifobj = decodeGif(gifdata);
+          console.log(gifobj);
+          duration = Date.now() - now;
+          console.log(duration / 1000);
+        });
       };
 
       test();
