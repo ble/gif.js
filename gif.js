@@ -154,7 +154,7 @@ Image.prototype.encodeHead = function() {
     intToLeString(this.rect.top, 2),
     intToLeString(this.rect.width, 2),
     intToLeString(this.rect.height, 2),
-    this._packedFields()];
+    String.fromCharCode(this._packedFields())];
   if(this.palette)
     items.push(this.palette.encodeEntries());
   items.push(String.fromCharCode(this.codeSize));
@@ -162,17 +162,7 @@ Image.prototype.encodeHead = function() {
 }
 
 Image.prototype.encode = function() {
-  var items = [
-    String.fromCharCode(Gif.imageSeparator),
-    intToLeString(this.rect.left, 2),
-    intToLeString(this.rect.top, 2),
-    intToLeString(this.rect.width, 2),
-    intToLeString(this.rect.height, 2),
-    this._packedFields()];
-  if(this.palette)
-    items.push(this.palette.encodeEntries());
-  items.push(String.fromCharCode(this.codeSize));
-
+  items = [this.encodeHead()];
   var encoder = new LzwEncoder(this.codeSize); 
   var lzw = encoder.encode(octetsToString(this.pixels));
   var block = new BlockWriter();
@@ -186,30 +176,7 @@ Image.prototype.encode = function() {
 };
 
 Image.prototype.decode = function(stream) { 
-  if(stream.get() != Gif.imageSeparator)
-    throw new "bad image";
-
-
-  var rect = {};
-  rect.left = leStringToInt(stream.getRaw(2));
-  rect.top = leStringToInt(stream.getRaw(2));
-  rect.width = leStringToInt(stream.getRaw(2));
-  rect.height = leStringToInt(stream.getRaw(2));
-  this.rect = rect;
-
-  var bits = new BitExtractor(stream.get());
-  var localPalette = Boolean(bits.get());
-  this.interlace = Boolean(bits.get());
-  var sort = Boolean(bits.get());
-  this.reserved = bits.get(2);
-  var paletteSize = 2 << bits.get(3);
-  if(localPalette) {
-    this.palette = new Palette(Boolean(sort), paletteSize, []);
-    this.palette.decodeEntries(stream);
-  } else {
-    this.palette = null;
-  }
-  this.codeSize = stream.get();
+  this.decodeHead(stream);
   var decoder = new LzwReader(new BlockReader(stream), true, this.codeSize);
   var tmp = [];
   var count;
@@ -256,7 +223,7 @@ Image.prototype._packedFields = function() {
   acc.append(1, p && p.sorted ? 1 : 0);
   acc.append(2, this.reserved, 2);
   acc.append(3, p ? p.logSize() - 1 : 0);
-  return acc.flush();
+  return acc.flush()[0];
 };
 
 var GraphicControl = function(
