@@ -33,19 +33,20 @@
       roundtrips = function(g) {
         var blocks = [];
         blocks.push(g.screen);
-        for(var i = 0; i < 5; i++) {
+        for(var i = 0; i < Math.min(5, g.blocks.length); i++) {
           blocks.push(g.blocks[i]);
         }
         for(var i = 0; i < blocks.length; i++) {
           var block = blocks[i];
           var constructor = block.__proto__.constructor;
           var encoded = block.encode();
-          console.log(asHex(block.encode()));
           var decoded = new constructor();
-          if(!decoded.decode(new ByteStream(block.encode()))) {
+          if(!decoded.decode(new ByteStream(encoded))) {
             throw constructor.toString();
           }
-          console.log(asHex(decoded.encode()));
+          var roundtrip = decoded.encode();
+          console.log(block);
+          console.log(roundtrip == encoded);
           console.log("==================");
 
         }
