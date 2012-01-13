@@ -6,6 +6,24 @@ var toBytes = function(string) {
   return result.join("");
 };
 
+var leStringToInt = function(str) {
+  var accum = 0;
+  for(var i = str.length - 1; i >= 0; i--) {
+    accum = accum << 8;
+    accum += str.charCodeAt(i) & 0xFF;
+  }
+  return accum;
+};
+
+var intToLeString = function(intv, bytes) {
+  var accum = [];
+  for(var i = 0; i < bytes; i++) {
+    accum.push(String.fromCharCode(intv & 0xFF));
+    intv = intv >> 8; 
+  }
+  return accum.join("");
+};
+
 var ByteStream = function(str) {
   this.str = str;
   this.start = 0;
@@ -157,6 +175,11 @@ var BlockReader = function(stream) {
   this.block = null;
 }
 
+BlockReader.prototype.getBlock = function() { 
+    var length = this.stream.get();
+    return this.stream.getRaw(length);
+}
+
 BlockReader.prototype.get = function() {
   if(this.block === null || !this.block.remaining()) {
     var length = this.stream.get();
@@ -171,4 +194,13 @@ BlockReader.prototype.get = function() {
       this.block = null;
     return result;
   }
+};
+
+BlockReader.prototype.getUntilEmptyBlock = function() {
+  var blocks = [];
+  var block;
+  while( (block = this.getBlock()) != "") {
+    blocks.push(block);
+  }
+  return blocks.join(""); 
 };

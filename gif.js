@@ -1,7 +1,53 @@
+var readBlocks = function(stream) {
+  var blocks = [];
+  var r = new BlockReader(stream);
+  var block;
+  while(block = r.get() != null) {
+    blocks.push(block);
+  }
+  return blocks.join("");
+};
+
 var Gif = function(version, screen, blocks) {
   this.version = version;
   this.screen = screen;
   this.blocks = blocks;
+};
+
+Gif.extensionSeparator = 0x21;
+Gif.imageSeparator = 0x2C;
+Gif.trailer = 0x3B;
+
+Gif.prototype.decode = function(stream) {
+  if(stream.getRaw(3) != "GIF")
+    throw "bad header";
+  this.version = stream.getRaw(3);
+  this.screen = new Screen();
+  if(!this.screen.decode(stream))
+    throw "bad screen"; 
+  this.blocks = [];
+  while(stream.remaining()) {
+    var sep = stream.get();
+    if(sep == Gif.extensionSeparator) {
+      var label = stream.get();
+      stream.unget(2);
+      var decoder = this.decoders[label];
+      if(!decoder)
+        throw "unknown extension label";
+      this.blocks.push(decoder(stream));
+    } else if(sep == Gif.imageSeparator) {
+      stream.unget();
+      var i = new Image();
+      if(!i.decode(stream))
+        throw "bad image";
+      this.blocks.push(i);
+    } else if(sep == Gif.trailer) {
+      return true;
+    } else {
+      throw "bad separator";
+    }
+  }
+  return false;
 };
 
 var Palette = function(sorted, size, values) {
@@ -15,7 +61,7 @@ Palette.prototype.encodeEntries = function() {
 };
 
 Palette.prototype.decodeEntries = function(stream) {
-  this.values = stringToOctets(stream.getRaw(this.values * 3));
+  this.values = stringToOctets(stream.getRaw(this.size * 3));
   return true;
 };
 
@@ -41,15 +87,17 @@ Screen.prototype._packedField = function() {
   var acc = new BitAccumulator(8);
   var p = this.globalPalette;
   if(p) { 
-    acc.append(1, 1)[0];
-    acc.append(this.colorResolution, 3);
-    acc.append(p.sorted ? 1 : 0, 1);
-    return acc.append(p.logSize() - 1, 3);
+    acc.append(1, 1);
+    acc.append(3, this.colorResolution);
+    acc.append(1, p.sorted ? 1 : 0);
+    acc.append(3, p.logSize() - 1);
   } else {
-    acc.append(0, 1);
-    acc.append(this.colorResolution, 3);
-    return acc.append(0, 4);
+    acc.append(1, 1);
+    acc.append(3, this.colorResolution);
+    acc.append(1, p.sorted ? 1 : 0);
+    acc.append(3, p.logSize() - 1);
   }
+  return acc.flush()[0];
 };
 
 Screen.prototype.encode = function() { 
@@ -78,7 +126,7 @@ Screen.prototype.decode = function(stream) {
   if(!this.aspect)
     this.aspect = null;
   else
-    this.aspect = (aspect + 15) / 64.0;
+    this.aspect = (this.aspect + 15) / 64.0;
 
   if(hasPalette) {
     var p = new Palette(Boolean(sort), paletteSize, []);
@@ -122,6 +170,10 @@ Image.prototype.encode = function() {
 };
 
 Image.prototype.decode = function(stream) { 
+  if(stream.get() != Gif.imageSeparator)
+    throw new "bad image";
+
+
   var rect = {};
   rect.left = leStringToInt(stream.getRaw(2));
   rect.top = leStringToInt(stream.getRaw(2));
@@ -129,7 +181,7 @@ Image.prototype.decode = function(stream) {
   rect.height = leStringToInt(stream.getRaw(2));
   this.rect = rect;
 
-  var packed = new BitExtractor(stream.get());
+  var bits = new BitExtractor(stream.get());
   var localPalette = Boolean(bits.get());
   this.interlace = Boolean(bits.get());
   var sort = Boolean(bits.get());
@@ -141,7 +193,7 @@ Image.prototype.decode = function(stream) {
   } else {
     this.palette = null;
   }
-
+  this.codeSize = stream.get();
   var decoder = new LzwReader(new BlockReader(stream), true, this.codeSize);
   var tmp = [];
   var count;
@@ -157,11 +209,11 @@ Image.prototype.decode = function(stream) {
 Image.prototype._packedFields = function() {
   var acc = new BitAccumulator(8);
   var p = this.palette;
-  acc.append(p ? 1 : 0, 1);
-  acc.append(this.interlace ? 1 : 0, 1);
-  acc.append(p && p.sorted ? 1 : 0, 1);
-  acc.append(this.reserved, 2);
-  return acc.append(p ? p.logSize() - 1 : 0, 3)[0];
+  acc.append(1, p ? 1 : 0);
+  acc.append(1, this.interlace ? 1 : 0);
+  acc.append(1, p && p.sorted ? 1 : 0);
+  acc.append(2, this.reserved, 2);
+  return acc.append(3, p ? p.logSize() - 1 : 0)[0];
 };
 
 var GraphicControl = function(
@@ -177,11 +229,14 @@ var GraphicControl = function(
   this.transparentIndex = transparentIndex;
 };
 
+GraphicControl.tag = 0xF9;
 GraphicControl.prototype.encode = function() {
   items = [
+    String.fromCharCode(Gif.extensionSeparator),
+    String.fromCharCode(GraphicControl.tag),
     String.fromCharCode(4),
     this._packedField(),
-    leIntToString(this.delayTime),
+    intToLeString(this.delayTime, 2),
     String.fromCharCode(this.transparentIndex),
     String.fromCharCode(0)];
   return items.join("");
@@ -189,13 +244,19 @@ GraphicControl.prototype.encode = function() {
 
 GraphicControl.prototype._packedField = function() {
   var acc = new BitAccumulator(8);
-  acc.append(this.reserved, 3);
-  acc.append(this.disposal, 3);
-  acc.append(this.userInput, 1);
-  return acc.append(this.transparent, 1)[0];
+  acc.append(3, this.reserved);
+  acc.append(3, this.disposal);
+  acc.append(1, this.userInput);
+  acc.append(1, this.transparent);
+  return acc.flush();
 };
 
 GraphicControl.prototype.decode = function(stream) {
+  if(stream.get() != Gif.extensionSeparator)
+    throw new "bad extension";
+  if(stream.get() != GraphicControl.tag)
+    throw new "bad extension";
+
   var blockSize = stream.get();
   if(blockSize != 4)
     throw "unexpected length for graphic control block";
@@ -214,6 +275,7 @@ GraphicControl.prototype.decode = function(stream) {
 var Comment = function(text) {
   this.text = text;
 };
+Comment.tag = 0xFE;
 
 Comment.prototype.encode = function() {
   var w = new BlockWriter();
@@ -222,22 +284,55 @@ Comment.prototype.encode = function() {
 };
 
 Comment.prototype.decode = function(stream) {
-  var blocks = [];
-  var r = new BlockReader(stream);
-  var block;
-  while(block = r.get() != null) {
-    blocks.push(block);
-  }
-  this.text = blocks.join("");
+  if(stream.get() != Gif.extensionSeparator)
+    throw new "bad extension";
+  if(stream.get() != Comment.tag)
+    throw new "bad extension";
+
+
+  this.text = new BlockReader(stream).getUntilEmptyBlock();
+  return true;
 };
 
 var PlainText = function() {
   throw "unimplemented";
 };
 
-var ApplicationExtension = function(extName, extId, data) {
-
+var ApplicationExtension = function(id, auth, data) {
+  this.identifier = id;
+  this.auth = auth;
+  this.data = data;
 };
+ApplicationExtension.tag = 0xFF;
+
+ApplicationExtension.prototype.decode = function(stream) {
+  if(stream.get() != Gif.extensionSeparator)
+    throw new "bad extension";
+  if(stream.get() != ApplicationExtension.tag)
+    throw new "bad extension";
+  var length = stream.get();
+  if(length != 11)
+    throw "bad application extension";
+  this.identifier = stream.getRaw(8);
+  this.auth = stream.getRaw(3);
+  this.data = new BlockReader(stream).getUntilEmptyBlock();
+  return true;
+};
+
+ApplicationExtension.prototype.encode = function(stream) {
+  var parts = [
+    String.fromCharCode(Gif.extensionSeparator),
+    String.fromCharCode(ApplicationExtension.tag),
+    String.fromCharCode(11),
+    this.identifier,
+    this.auth];
+    var b = new BlockWriter();
+    b.append(this.data);
+    parts.push(b.flush());
+    parts.push(String.fromCharCode(0));
+  return parts.join(""); 
+};
+
 var decodeGif = function(gifData) {
   var stream = new ByteStream(gifData);
   var gif = {};
@@ -406,3 +501,19 @@ var decoders = (function() {
   };
   return decoders;
 })();
+
+Gif.prototype.decoders = (function(){
+  var exts = [GraphicControl, Comment, ApplicationExtension, PlainText];
+  var ds = {};
+  var decode = function(stream) {
+    var instance = new this();
+    if(!instance.decode(stream))
+      throw "bad " + this + " decode.";
+    return instance;
+  };
+  for(var n = 0; n < exts.length; n++) {
+    var constructor = exts[n];
+    ds[constructor.tag] = decode.bind(constructor);
+  }
+  return ds;
+})(); 
