@@ -82,7 +82,7 @@ LzwEncoder.prototype.encode = function(string) {
 
 LzwEncoder.prototype.generateCodes = function(stream) {
   var table = this.table;
-  var codes = [];
+  var codes = [table.clear, table.bits()];
   var prefix = "";
   while(stream.remaining()) {
     var x = stream.getRaw();
