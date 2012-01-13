@@ -66,7 +66,11 @@ LzwReader.prototype.read = function(dest) {
     if(this.toRead.length > 0) {
       var n = this.toRead.length;
       args = [0, n].concat(this.toRead);
-      dest.splice.apply(dest, args);
+      while(dest.length)
+        dest.pop();
+      while(this.toRead.length) {
+        dest.push(this.toRead.shift());
+      }
       this.toRead = [];
       return n;
     }
