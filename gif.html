@@ -30,6 +30,27 @@
           //result.push((s.charCodeAt(i) & 0xFF).toString(16));
         return result
       }
+      roundtrips = function(g) {
+        var blocks = [];
+        blocks.push(g.screen);
+        for(var i = 0; i < 5; i++) {
+          blocks.push(g.blocks[i]);
+        }
+        for(var i = 0; i < blocks.length; i++) {
+          var block = blocks[i];
+          var constructor = block.__proto__.constructor;
+          var encoded = block.encode();
+          console.log(asHex(block.encode()));
+          var decoded = new constructor();
+          if(!decoded.decode(new ByteStream(block.encode()))) {
+            throw constructor.toString();
+          }
+          console.log(asHex(decoded.encode()));
+          console.log("==================");
+
+        }
+        
+      };
       test = function() {
         g = getFile("gifs/bwanim.gif", function(gifdata) {
           g = new Gif();
@@ -38,6 +59,7 @@
           duration = Date.now() - now;
           console.log(g);
           console.log(duration / 1000);
+          roundtrips(g);
         });
       };
 

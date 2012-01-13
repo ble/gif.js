@@ -54,7 +54,6 @@ CodeTable.prototype.newCode = function(sampleString) {
     this.bitLength++;
     this.overflow = 1 << this.bitLength;
   }
- //console.log([asHex(sampleString), this.nextCode]);
   this.codes[sampleString] = this.nextCode;
   this.decodes[this.nextCode] = sampleString;
   this.nextCode++;
@@ -78,7 +77,6 @@ var LzwEncoder = function(minCodeSize) {
 
 LzwEncoder.prototype.encode = function(string) {
   var codes = this.generateCodes(new ByteStream(string));
-  console.log(codes);
   return octetsToString(this.codesToOctets(codes));
 };
 

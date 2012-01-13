@@ -147,8 +147,9 @@ var Image = function(rect, palette, interlace, reserved, pixels, codeSize) {
   this.codeSize = codeSize;
 };
 
-Image.prototype.encode = function() {
+Image.prototype.encodeHead = function() {
   var items = [
+    String.fromCharCode(Gif.imageSeparator),
     intToLeString(this.rect.left, 2),
     intToLeString(this.rect.top, 2),
     intToLeString(this.rect.width, 2),
@@ -156,12 +157,27 @@ Image.prototype.encode = function() {
     this._packedFields()];
   if(this.palette)
     items.push(this.palette.encodeEntries());
+  items.push(String.fromCharCode(this.codeSize));
+  return items.join(""); 
+}
+
+Image.prototype.encode = function() {
+  var items = [
+    String.fromCharCode(Gif.imageSeparator),
+    intToLeString(this.rect.left, 2),
+    intToLeString(this.rect.top, 2),
+    intToLeString(this.rect.width, 2),
+    intToLeString(this.rect.height, 2),
+    this._packedFields()];
+  if(this.palette)
+    items.push(this.palette.encodeEntries());
+  items.push(String.fromCharCode(this.codeSize));
 
   var encoder = new LzwEncoder(this.codeSize); 
   var lzw = encoder.encode(octetsToString(this.pixels));
   var block = new BlockWriter();
   block.append(lzw);
-  var gifCompressed = lzw.flush();
+  var gifCompressed = block.flush();
   items.push(gifCompressed);
 
   //block terminator
@@ -206,6 +222,32 @@ Image.prototype.decode = function(stream) {
   return true;
 };
 
+Image.prototype.decodeHead = function(stream) {
+  if(stream.get() != Gif.imageSeparator)
+    throw new "bad image";
+
+  var rect = {};
+  rect.left = leStringToInt(stream.getRaw(2));
+  rect.top = leStringToInt(stream.getRaw(2));
+  rect.width = leStringToInt(stream.getRaw(2));
+  rect.height = leStringToInt(stream.getRaw(2));
+  this.rect = rect;
+
+  var bits = new BitExtractor(stream.get());
+  var localPalette = Boolean(bits.get());
+  this.interlace = Boolean(bits.get());
+  var sort = Boolean(bits.get());
+  this.reserved = bits.get(2);
+  var paletteSize = 2 << bits.get(3);
+  if(localPalette) {
+    this.palette = new Palette(Boolean(sort), paletteSize, []);
+    this.palette.decodeEntries(stream);
+  } else {
+    this.palette = null;
+  }
+  this.codeSize = stream.get();
+}
+
 Image.prototype._packedFields = function() {
   var acc = new BitAccumulator(8);
   var p = this.palette;
@@ -213,7 +255,8 @@ Image.prototype._packedFields = function() {
   acc.append(1, this.interlace ? 1 : 0);
   acc.append(1, p && p.sorted ? 1 : 0);
   acc.append(2, this.reserved, 2);
-  return acc.append(3, p ? p.logSize() - 1 : 0)[0];
+  acc.append(3, p ? p.logSize() - 1 : 0);
+  return acc.flush();
 };
 
 var GraphicControl = function(
@@ -235,7 +278,7 @@ GraphicControl.prototype.encode = function() {
     String.fromCharCode(Gif.extensionSeparator),
     String.fromCharCode(GraphicControl.tag),
     String.fromCharCode(4),
-    this._packedField(),
+    String.fromCharCode(this._packedField()),
     intToLeString(this.delayTime, 2),
     String.fromCharCode(this.transparentIndex),
     String.fromCharCode(0)];
@@ -248,7 +291,7 @@ GraphicControl.prototype._packedField = function() {
   acc.append(3, this.disposal);
   acc.append(1, this.userInput);
   acc.append(1, this.transparent);
-  return acc.flush();
+  return acc.flush()[0];
 };
 
 GraphicControl.prototype.decode = function(stream) {
@@ -333,6 +376,7 @@ ApplicationExtension.prototype.encode = function(stream) {
   return parts.join(""); 
 };
 
+//old stuff
 var decodeGif = function(gifData) {
   var stream = new ByteStream(gifData);
   var gif = {};

@@ -1,3 +1,14 @@
+      var asHex = function(str) {
+        result = [];
+        for(var i = 0; i < str.length; i++) {
+          var hex = (str.charCodeAt(i) & 0xFF).toString(16);
+          if(hex.length == 1)
+            hex = "0" + hex;
+          result.push(hex);
+        }
+        return result.join(" ");
+      };
+
 var toBytes = function(string) {
   var result = [];
   for(var i = 0; i < string.length; i++) {
