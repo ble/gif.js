@@ -119,6 +119,39 @@ BitStream.prototype.get = function(bits) {
   return result;
 };
 
+var BlockWriter = function() {
+  this.block = [null];
+  this.blocks = [];
+  this.count = 0;
+};
+
+BlockWriter.prototype.append = function(data) {
+  var take = Math.min(data.length, 255 - this.count);
+  this.block.push(data.substr(0, take));
+  this.count += take;
+  if(this.count == 255) {
+    this.block[0] = String.fromCharCode(0xFF);
+    this.blocks.push(this.block.join(""));
+    this.block = [null];
+    this.count = 0;
+  }
+  if(take < data.length) {
+    this.append(data.substr(take));
+  }
+};
+
+BlockWriter.prototype.flush = function() {
+  if(this.block.length > 1) { 
+    this.block[0] = String.fromCharCode(this.count);
+    this.blocks.push(this.block.join(""));
+    this.block = [null];
+    this.count = 0;
+  }
+  var result = this.blocks.join("");
+  this.blocks = [];
+  return result;
+};
+
 var BlockReader = function(stream) {
   this.stream = stream;
   this.block = null;
