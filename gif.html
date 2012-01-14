@@ -65,6 +65,18 @@
         }
         return diffs;
       };
+      var blobUrl = function(data) {
+        var bb = new WebKitBlobBuilder();
+        bb.append(data);
+        return webkitURL.createObjectURL(bb.getBlob());
+      };
+      var stringIntoBytes = function(str) {
+        var buf = new ArrayBuffer(str.length);
+        var arr = new Uint8Array(buf);
+        for(var i = 0; i < arr.length; i++)
+          arr[i] = str.charCodeAt(i);
+        return buf;
+      };
       test = function() {
         g = getFile("gifs/bwanim.gif", function(gifdata) {
           bindata = gifdata;
@@ -76,6 +88,7 @@
           console.log(duration / 1000);
           roundtrips(g);
         });
+
       };
 
     </script>
