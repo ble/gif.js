@@ -52,8 +52,22 @@
         }
         
       };
+      var diffbins = function(a, b) {
+        if(a.length != b.length)
+          throw "diff lengths";
+        var diffs = [];
+        for(var i = 0; i < a.length; i++) {
+          var ac = a.charCodeAt(i) & 0xFF;
+          var bc = b.charCodeAt(i) & 0xFF;
+          if(ac != bc) {
+            diffs.push([i, ac, bc]);
+          }
+        }
+        return diffs;
+      };
       test = function() {
         g = getFile("gifs/bwanim.gif", function(gifdata) {
+          bindata = gifdata;
           g = new Gif();
           now = Date.now();
           g.decode(new ByteStream(gifdata));

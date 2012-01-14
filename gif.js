@@ -1,12 +1,3 @@
-var readBlocks = function(stream) {
-  var blocks = [];
-  var r = new BlockReader(stream);
-  var block;
-  while(block = r.get() != null) {
-    blocks.push(block);
-  }
-  return blocks.join("");
-};
 
 var Gif = function(version, screen, blocks) {
   this.version = version;
@@ -48,6 +39,14 @@ Gif.prototype.decode = function(stream) {
     }
   }
   return false;
+};
+
+Gif.prototype.encode = function() {
+  var headerItems = ["GIF", this.version, this.screen.encode()];
+  var blockItems = this.blocks.map(function(x){return x.encode();});
+  var items = headerItems.concat(blockItems);
+  items.push(String.fromCharCode(Gif.trailer));
+  return items.join(""); 
 };
 
 var Palette = function(sorted, size, values) {
@@ -290,7 +289,12 @@ Comment.tag = 0xFE;
 Comment.prototype.encode = function() {
   var w = new BlockWriter();
   w.append(this.text);
-  return w.flush();
+  var items = [
+    String.fromCharCode(Gif.extensionSeparator),
+    String.fromCharCode(Comment.tag),
+    w.flush(),
+    String.fromCharCode(0)];
+  return items.join("");
 };
 
 Comment.prototype.decode = function(stream) {
