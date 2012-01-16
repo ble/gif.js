@@ -99,6 +99,8 @@ LzwReader.prototype.decode = function() {
       this.hi = this.eof;
       this.overflow = 1 << this.width;
       this.last = decoderInvalidCode;
+      this.suffix = new Array(1 << maxWidth);
+      this.prefix = new Array(1 << maxWidth);
       continue;
     } else if(code == this.eof) {
       this.flush();

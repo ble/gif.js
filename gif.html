@@ -57,7 +57,8 @@
       };
       var doStuff = function(gif) {
         var redraw = prep(gif);
-        window.setInterval(function() { redraw(1); }, 100);
+        //window.setInterval(function() { redraw(1); }, 100);
+        redraw();
       };
       var prep = function(gif) {
         var rows = 2;

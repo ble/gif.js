@@ -26,8 +26,7 @@ var CodeTable = function(nRoots) {
   this.bitLength = log2Ceil(nRoots) + 1; 
   this.clear = 1 << (this.bitLength - 1);
   this.stop = this.clear + 1;
-  this.overflow = 1 << this.bitLength;
-  this._addRoots();
+  this.reInitialize();
 };
 
 CodeTable.prototype._addRoots = function() {
@@ -39,17 +38,21 @@ CodeTable.prototype._addRoots = function() {
   this.nextCode = this.stop + 1;
 };
 
-CodeTable.prototype.clear = function() {
+CodeTable.prototype.reInitialize = function() {
   this.codes = {};
   this.decodes = [];
   this.bitLength = log2Ceil(this.nRoots) + 1; 
+  this.overflow = 1 << this.bitLength;
   this._addRoots();
- 
-}
+};
+
+CodeTable.prototype.full = function() {
+  return this.nextCode == this.overflow && this.bitLength == 12;
+};
 
 CodeTable.prototype.newCode = function(sampleString) {
   if(this.nextCode == this.overflow) {
-    if(this.bitLength > 12)
+    if(this.bitLength >= 12)
       throw "over length";
     this.bitLength++;
     this.overflow = 1 << this.bitLength;
@@ -93,7 +96,13 @@ LzwEncoder.prototype.generateCodes = function(stream) {
     }
     code = table.encode(prefix);
     codes.push(code, table.bits());
-    table.newCode(extended);
+    if(table.full()) {
+      codes.push(table.clear, table.bits());
+      table.reInitialize();
+      codes.push(table.encode(x), table.bits());
+    } else {
+      table.newCode(extended);
+    }
     prefix = x;
   }
   if(prefix.length > 0) {
