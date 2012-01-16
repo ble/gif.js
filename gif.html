@@ -45,7 +45,7 @@
       };
 
       test = function() {
-        g = getFile("gifs/bwanim.gif", function(gifdata) {
+        g = getFile("gifs/lasercat.gif", function(gifdata) {
           bindata = gifdata;
           g = new Gif();
           now = Date.now();
@@ -60,8 +60,8 @@
         window.setInterval(function() { redraw(1); }, 100);
       };
       var prep = function(gif) {
-        var rows = 8;
-        var cols = 8;
+        var rows = 2;
+        var cols = 4;
         var width = gif.screen.width;
         var height = gif.screen.height;
         var cWidth = width * cols;
@@ -82,9 +82,8 @@
               //iix = (images.length + iix + (rows - 1) * Math.floor(images.length / rows / cols)) % images.length;
               //iix = (iix + 1) % images.length;
               iix = (images.length + iix + Math.floor(images.length / rows / cols)) % images.length;
-              var left = width * col;
-              var top = height * row;
-              var pixels = ctx.getImageData(left, top, width, height);
+              var rr = img.rect;
+              var pixels = ctx.createImageData(rr.width, rr.height);
               var pary = pixels.data;
               for(var ix = 0; ix < height * width; ix++) {
                 var v = img.pixels[ix];
@@ -93,7 +92,9 @@
                 pary[4*ix + 2] = pv[3*v + 2];
                 pary[4*ix + 3] = 255;
               }
-              ctx.clearRect(left, top, width, height);
+              var left = width * col + rr.left;
+              var top = height * row + rr.top; 
+              ctx.clearRect(left, top, rr.width, rr.height);
               ctx.putImageData(pixels, left, top); 
             }
           }
