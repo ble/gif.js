@@ -4,6 +4,19 @@
     <script src="lzw.js"></script>
     <script src="lzw2.js"></script>
     <script>
+<<<<<<< HEAD
+=======
+      var asHex = function(str) {
+        result = [];
+        for(var i = 0; i < str.length; i++) {
+          var hex = (str.charCodeAt(i) & 0xFF).toString(16);
+          if(hex.length == 1)
+            hex = "0" + hex;
+          result.push(hex);
+        }
+        return result.join(" ");
+      };
+>>>>>>> master
       var test = function() {
         var octest = [0,1,2,3,0,1,0,3,0,1,2,3,2,3,1];
         var E = new LzwEncoder(3);

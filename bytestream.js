@@ -186,11 +186,14 @@ var BlockReader = function(stream) {
   this.block = null;
 }
 
+<<<<<<< HEAD
 BlockReader.prototype.getBlock = function() { 
     var length = this.stream.get();
     return this.stream.getRaw(length);
 }
 
+=======
+>>>>>>> master
 BlockReader.prototype.get = function() {
   if(this.block === null || !this.block.remaining()) {
     var length = this.stream.get();
@@ -204,6 +207,7 @@ BlockReader.prototype.get = function() {
     if(!this.block.remaining())
       this.block = null;
     return result;
+<<<<<<< HEAD
   }
 };
 
@@ -212,6 +216,8 @@ BlockReader.prototype.getUntilEmptyBlock = function() {
   var block;
   while( (block = this.getBlock()) != "") {
     blocks.push(block);
+=======
+>>>>>>> master
   }
   return blocks.join(""); 
 };

@@ -80,6 +80,10 @@ var LzwEncoder = function(minCodeSize) {
 
 LzwEncoder.prototype.encode = function(string) {
   var codes = this.generateCodes(new ByteStream(string));
+<<<<<<< HEAD
+=======
+  console.log(codes);
+>>>>>>> master
   return octetsToString(this.codesToOctets(codes));
 };
 
