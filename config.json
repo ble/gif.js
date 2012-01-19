@@ -1,0 +1,10 @@
+{
+  "id": "instream",
+  "paths": ".",
+  "mode": "RAW",
+  "level": "VERBOSE",
+  "inputs": [
+    "instream.js",
+    "instream_test.js"
+  ]
+}
