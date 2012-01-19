@@ -1,0 +1,9 @@
+{
+  "id": "instream",
+  "paths": "src",
+  "mode": "SIMPLE",
+  "level": "VERBOSE",
+  "inputs": [
+    "src/reader_test.js"
+  ]
+}
