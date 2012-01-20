@@ -1,6 +1,6 @@
-goog.provide('ble.InStream');
-goog.provide('ble.ArrayStream');
-goog.provide('ble.ConcatStream');
+goog.provide('ble.Reader');
+goog.provide('ble.ArrayReader');
+goog.provide('ble.ConcatReader');
 goog.provide('ble.b2s');
 
 goog.require('goog.array');
@@ -17,30 +17,30 @@ ble.b2s = function(octets) {
 /**
  * @interface
  */
-ble.InStream = function() {};
+ble.Reader = function() {};
 
 /** @return {number} */
-ble.InStream.prototype.available = function() {};
+ble.Reader.prototype.available = function() {};
 
 /** @return {number} */
-ble.InStream.prototype.readByte = function() {};
+ble.Reader.prototype.readByte = function() {};
 
 /** @return {Uint8Array} */
-ble.InStream.prototype.readBytes = function() {};
+ble.Reader.prototype.readBytes = function() {};
 
 /** @param {number} bytes
- * @return {ble.InStream} */
-ble.InStream.prototype.subStream = function(bytes) {};
+ * @return {ble.Reader} */
+ble.Reader.prototype.subReader = function(bytes) {};
 
-/** @return {ble.InStream} */
-ble.InStream.prototype.slice = function() {};
+/** @return {ble.Reader} */
+ble.Reader.prototype.slice = function() {};
 
 /** @constructor
- * @implements {ble.InStream}
+ * @implements {ble.Reader}
  * @param {ArrayBuffer} ary
  * @param {number=} opt_start
  * @param {number=} opt_length */
-ble.ArrayStream = function(ary, opt_start, opt_length) {
+ble.ArrayReader = function(ary, opt_start, opt_length) {
   this.aBuf = ary;
   this.vStart = opt_start ? opt_start : 0;
   this.vEnd = opt_length ? this.vStart + opt_length : this.aBuf.byteLength;
@@ -50,21 +50,21 @@ ble.ArrayStream = function(ary, opt_start, opt_length) {
   this.octs = new Uint8Array(this.aBuf, this.vStart, length);
 };
 
-ble.ArrayStream.fromAsciiString = function(str) {
+ble.ArrayReader.fromAsciiString = function(str) {
   var backing = new ArrayBuffer(str.length);
   var view = new Uint8Array(backing);
   for(var i = 0; i < str.length; i++) {
     //no need to bother with masking; array can only store 8-bit values.
     view[i] = str.charCodeAt(i); 
   }
-  return new ble.ArrayStream(backing);
+  return new ble.ArrayReader(backing);
 };
 
-ble.ArrayStream.prototype.available = function() {
+ble.ArrayReader.prototype.available = function() {
   return this.end - this.start;
 };
 
-ble.ArrayStream.prototype.readByte = function() {
+ble.ArrayReader.prototype.readByte = function() {
   if(this.start >= this.end)
     throw "read beyond end";
   var result = this.octs[this.start];
@@ -72,7 +72,7 @@ ble.ArrayStream.prototype.readByte = function() {
   return result;
 };
 
-ble.ArrayStream.prototype.readBytes = function(bytes) { 
+ble.ArrayReader.prototype.readBytes = function(bytes) { 
   if(this.start > this.end - bytes)
     throw "read beyond end";
   var result = this.octs.subarray(this.start, this.start + bytes);
@@ -80,71 +80,70 @@ ble.ArrayStream.prototype.readBytes = function(bytes) {
   return result;
 };
 
-ble.ArrayStream.prototype.subStream = function(bytes) {
+ble.ArrayReader.prototype.subReader = function(bytes) {
   if(this.start > this.end - bytes)
     throw "read beyond end";
-  var result = new ble.ArrayStream(this.aBuf, this.vStart + this.start, bytes);
+  var result = new ble.ArrayReader(this.aBuf, this.vStart + this.start, bytes);
   this.start += bytes; 
   return result;
 };
 
-ble.ArrayStream.prototype.slice = function() { 
-  return new ble.ArrayStream(this.aBuf, this.vStart + this.start, this.available());
+ble.ArrayReader.prototype.slice = function() { 
+  return new ble.ArrayReader(this.aBuf, this.vStart + this.start, this.available());
 };
 
 /** @return {ArrayBuffer} */
-ble.ArrayStream.prototype.underlying = function() { 
+ble.ArrayReader.prototype.underlying = function() { 
   return this.aBuf;
 };
 
 /** @return {Array.<number>} */
-ble.ArrayStream.prototype.viewRange = function() {
+ble.ArrayReader.prototype.viewRange = function() {
   return [this.vStart, this.vEnd];
 };
 
 /** @constructor
- * @implements {ble.InStream}
- * @param {Array.<ble.InStream>} substreams */
-ble.ConcatStream = function(substreams) {
+ * @implements {ble.InReader}
+ * @param {Array.<ble.InReader>} substreams */
+ble.ConcatReader = function(substreams) {
     this.substreams = substreams.slice();
     this.subIx = 0;
-    this._advance();
+    this._s();
 };
 
-ble.ConcatStream.prototype._advance = function() {
-  while(this._s() && this._s().available() == 0)
+ble.ConcatReader.prototype._s = function() {
+  var s = this.substreams[this.subIx];
+  while(s && s.available() == 0) {
     this.subIx++;
-};
-
-ble.ConcatStream.prototype._s = function() {
-  return this.substreams[this.subIx];
+    s = this.substreams[this.subIx]; 
+  }
+  return s;
 }
 
 /** @return {number} */
-ble.ConcatStream.prototype.available = function() {
+ble.ConcatReader.prototype.available = function() {
   var sum = 0;
   for(var ix = this.subIx; ix < this.substreams.length; ix++) {
-    sum += this._s().available();
+    sum += this.substreams[ix].available();
   }
   return sum;
 };
 
 /** @return {number} */
-ble.ConcatStream.prototype.readByte = function() {
-  this._advance();
+ble.ConcatReader.prototype.readByte = function() {
   if(this.subIx >= this.substreams.length)
     throw "read beyond end";
   return this._s().readByte();
 };
 
 /** @return {Uint8Array} */
-ble.ConcatStream.prototype.readBytes = function(bytes) {
-  var ss = this.subStream(bytes);
+ble.ConcatReader.prototype.readBytes = function(bytes) {
+  var ss = this.subReader(bytes);
   var backing = new ArrayBuffer(bytes);
   var contiguous = new Uint8Array(backing);
   var offset = 0;
   while(ss.available()) {
-    var chunk = this._s();
+    var chunk = ss._s();
     var sz = chunk.available();
     contiguous.set(chunk.readBytes(sz), offset);
     offset += sz;
@@ -153,8 +152,8 @@ ble.ConcatStream.prototype.readBytes = function(bytes) {
 };
 
 /** @param {number} bytes
- * @return {ble.InStream} */
-ble.ConcatStream.prototype.subStream = function(bytes) {
+ * @return {ble.InReader} */
+ble.ConcatReader.prototype.subReader = function(bytes) {
   if(this.available() < bytes)
     throw "read beyond end";
   var blocks = [];
@@ -162,25 +161,47 @@ ble.ConcatStream.prototype.subStream = function(bytes) {
   while(sum < bytes) {
     var block = this._s();
     var fromBlock = Math.min(bytes, this._s().available());
-    if(fromBlock == 0)
+    if(fromBlock == 0) {
       continue;
-    var ssBlock = block.subStream(fromBlock);
+    }
+    var ssBlock = block.subReader(fromBlock);
     blocks.push(ssBlock);
     sum += fromBlock;
-    if(fromBlock == this._s().available())
-      this.subIx++;
   }
-  return new ble.ConcatStream(blocks);
+  return new ble.ConcatReader(blocks);
 };
 
-/** @return {ble.InStream} */
-ble.ConcatStream.prototype.slice = function() {
+/** @return {ble.InReader} */
+ble.ConcatReader.prototype.slice = function() {
   var blocks = [];
   var ix = this.subIx;
   while(ix < this.substreams.length) {
-    blocks.push(this._s().slice());
+    blocks.push(this.substreams[ix].slice());
     ix++;
   }
-  return new ble.ConcatStream(blocks);
+  return new ble.ConcatReader(blocks);
 };
+
+/**
+ * @constructor
+ *
+ */
+ble.Reader = function() {};
+
+/** @return {number} */
+ble.Reader.prototype.available = function() {};
+
+/** @return {number} */
+ble.Reader.prototype.readByte = function() {};
+
+/** @return {Uint8Array} */
+ble.Reader.prototype.readBytes = function() {};
+
+/** @param {number} bytes
+ * @return {ble.Reader} */
+ble.Reader.prototype.subReader = function(bytes) {};
+
+/** @return {ble.Reader} */
+ble.Reader.prototype.slice = function() {};
+
 

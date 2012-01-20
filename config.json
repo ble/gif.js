@@ -1,10 +1,10 @@
 {
   "id": "instream",
-  "paths": ".",
-  "mode": "RAW",
+  "paths": "src",
+  "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [
-    "instream.js",
-    "instream_test.js"
+    "src/instream.js",
+    "src/instream_test.js"
   ]
 }
