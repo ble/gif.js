@@ -54,7 +54,7 @@ ble.ArrayReader = function(ary, opt_start, opt_length) {
   this.octs = new Uint8Array(this.aBuf, this.vStart, length);
 };
 
-ble.ArrayReader.fromAsciiString = function(str) {
+ble.ArrayReader.fromString = function(str) {
   var backing = new ArrayBuffer(str.length);
   var view = new Uint8Array(backing);
   for(var i = 0; i < str.length; i++) {
@@ -219,7 +219,7 @@ ble.BlockReader.fromString = function(str, blockLengths) {
     str = str.substr(L);
   }
   parts.push(String.fromCharCode(0));
-  return new ble.BlockReader(ble.ArrayReader.fromAsciiString(parts.join("")));
+  return new ble.BlockReader(ble.ArrayReader.fromString(parts.join("")));
 };
 
 ble.BlockReader.prototype._ready = function() {
@@ -277,7 +277,7 @@ ble.BlockReader.prototype.readByte = function() {
     throw "read beyond end";
   var ret = this.block.readByte();
   if(this.block.empty())
-    this.block == null;
+    this.block = null;
   return ret;
 };
 
@@ -311,7 +311,7 @@ ble.BlockReader.prototype.subReader = function(bytes) {
     chunks.push(this.block.subReader(toRead));
     size += toRead;
   }
-  return new ConcatReader(chunks);
+  return new ble.ConcatReader(chunks);
 };
 
 /** @return {ble.Reader} */
