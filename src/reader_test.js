@@ -25,3 +25,24 @@ var test_roundtrip = function() {
   //assertEqual(x[2], strings[0] + strings[1]);
 };
 
+var test_blockread = function() {
+  var strt = "Now is the time";
+  var reader = ble.BlockReader.fromString(strt, [7,8]);
+  var accum = [];
+  while(!reader.empty()) {
+    accum.push(String.fromCharCode(reader.readByte()));
+    console.log(accum.join(""));
+  }
+};
+
+var test_blockread2 = function() {
+  var strt = "Now is the time";
+  var reader = ble.BlockReader.fromString(strt, [7,8]);
+  var accum = [];
+  while(!reader.empty()) {
+    var L = Math.min(4, reader.available());
+    for(var i = 0; i < L; i++)
+      accum.push(String.fromCharCode(reader.readByte()));
+    console.log(accum.join(""));
+  }
+};

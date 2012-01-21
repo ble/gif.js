@@ -22,11 +22,15 @@ ble.Reader = function() {};
 /** @return {number} */
 ble.Reader.prototype.available = function() {};
 
+/** @return {boolean} */
+ble.Reader.prototype.empty = function() {};
+
 /** @return {number} */
 ble.Reader.prototype.readByte = function() {};
 
-/** @return {Uint8Array} */
-ble.Reader.prototype.readBytes = function() {};
+/** @param {number} bytes 
+ * @return {Uint8Array} */
+ble.Reader.prototype.readBytes = function(bytes) {};
 
 /** @param {number} bytes
  * @return {ble.Reader} */
@@ -62,6 +66,10 @@ ble.ArrayReader.fromAsciiString = function(str) {
 
 ble.ArrayReader.prototype.available = function() {
   return this.end - this.start;
+};
+
+ble.ArrayReader.prototype.empty = function() {
+  return this.start >= this.end;
 };
 
 ble.ArrayReader.prototype.readByte = function() {
@@ -113,7 +121,7 @@ ble.ConcatReader = function(substreams) {
 
 ble.ConcatReader.prototype._s = function() {
   var s = this.substreams[this.subIx];
-  while(s && s.available() == 0) {
+  while(s && s.empty()) {
     this.subIx++;
     s = this.substreams[this.subIx]; 
   }
@@ -127,6 +135,11 @@ ble.ConcatReader.prototype.available = function() {
     sum += this.substreams[ix].available();
   }
   return sum;
+};
+
+ble.ConcatReader.prototype.empty = function() {
+  var s = this._s();
+  return(!s || s.empty());
 };
 
 /** @return {number} */
@@ -184,24 +197,130 @@ ble.ConcatReader.prototype.slice = function() {
 
 /**
  * @constructor
- *
+ * @param{ble.Reader} reader
  */
-ble.Reader = function() {};
+ble.BlockReader = function(reader) {
+  this.src = reader;
+  this.block = null;
+  this.done = false;
+};
+
+ble.BlockReader.fromString = function(str, blockLengths) {
+  var parts = [];
+  for(var i = 0; i < blockLengths.length; i++) {
+    var L = blockLengths[i];
+    if(L <= 0 || L > 255)
+      throw "bad block length";
+    var part = str.substr(0, L);
+    if(part.length != L)
+      throw "bad block length";
+    parts.push(String.fromCharCode(L));
+    parts.push(part);
+    str = str.substr(L);
+  }
+  parts.push(String.fromCharCode(0));
+  return new ble.BlockReader(ble.ArrayReader.fromAsciiString(parts.join("")));
+};
+
+ble.BlockReader.prototype._ready = function() {
+  if(!this.block || this.block.empty())
+    this._nextBlock();
+};
+
+ble.BlockReader.prototype._nextBlock = function() {
+  if(this.done)
+    throw "bad next block";
+  var length = this.src.readByte();
+  this.block = this.src.subReader(length);
+  if(length == 0) {
+    this.done = true;
+    this.block = null;
+    this.src = null;
+  }
+};
+
+/** return {boolean} */
+ble.BlockReader.prototype._ensure = function(bytes) {
+  var walk = this.slice();
+  if(walk.block == null)
+    walk._nextBlock();
+  var sum = 0;
+  while(sum < bytes && !walk.done) {
+    sum += walk.block.available();
+    walk._nextBlock();
+  }
+  return sum < bytes; 
+};
+
+ble.BlockReader.prototype.empty = function() {
+  this._ready();
+  return this.done;
+};
 
 /** @return {number} */
-ble.Reader.prototype.available = function() {};
+ble.BlockReader.prototype.available = function() {
+  var walk = this.slice();
+  if(walk.block == null)
+    walk._nextBlock();
+  var sum = 0;
+  while(!walk.done) {
+    sum += walk.block.available();
+    walk._nextBlock();
+  }
+  return sum;
+};
 
 /** @return {number} */
-ble.Reader.prototype.readByte = function() {};
+ble.BlockReader.prototype.readByte = function() {
+  this._ready();
+  if(this.done)
+    throw "read beyond end";
+  var ret = this.block.readByte();
+  if(this.block.empty())
+    this.block == null;
+  return ret;
+};
 
-/** @return {Uint8Array} */
-ble.Reader.prototype.readBytes = function() {};
+/** @param {number} bytes 
+ * @return {Uint8Array} */
+ble.BlockReader.prototype.readBytes = function(bytes) {
+  if(!this._ensure(bytes))
+    throw "Read beyond end";
+  var backing = new ArrayBuffer(bytes);
+  var contiguous = new Uint8Array(backing);
+  var offset = 0;
+  while(offset < bytes) {
+    if(this.block == null || this.block.empty())
+      this._nextBlock();
+    var toRead = Math.min(bytes - offset, this.block.available());
+    contiguous.set(this.block.readBytes(toRead), offset);
+    offset += toRead;
+  }
+  return contiguous;
+};
 
 /** @param {number} bytes
  * @return {ble.Reader} */
-ble.Reader.prototype.subReader = function(bytes) {};
+ble.BlockReader.prototype.subReader = function(bytes) {
+  var chunks = [];
+  var size = 0;
+  while(size < bytes) {
+    if(this.block == null || this.block.empty())
+      this._nextBlock();
+    var toRead = Math.min(bytes - size, this.block.available());
+    chunks.push(this.block.subReader(toRead));
+    size += toRead;
+  }
+  return new ConcatReader(chunks);
+};
 
 /** @return {ble.Reader} */
-ble.Reader.prototype.slice = function() {};
+ble.BlockReader.prototype.slice = function() {
+  var slice = new ble.BlockReader(this.src.slice());
+  if(this.block)
+    slice.block = this.block.slice();
+  slice.done = this.done;
+  return slice;
+};
 
 

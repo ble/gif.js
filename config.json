@@ -4,7 +4,7 @@
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [
-    "src/instream.js",
-    "src/instream_test.js"
+    "src/reader.js",
+    "src/reader_test.js"
   ]
 }
