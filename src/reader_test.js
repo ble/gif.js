@@ -55,10 +55,17 @@ var test_bitread = function() {
     var c = grey4.shift() + (grey4.shift() << 4);
     acc.push(String.fromCharCode(c));
   }
-  var reader = new ble.BitReader(ble.ArrayReader.fromString(acc.join("")));
-  while(!reader.empty()) {
-    console.log(reader.read(4).toString(16));
-  }
+  var binString = acc.join("");
+  var readLsb = new ble.BitReader(ble.ArrayReader.fromString(binString));
+  var readMsb = new ble.BitReader(ble.ArrayReader.fromString(binString), true);
+  var asHex = function(r) {
+    var acc = [];
+    while(!r.empty())
+      acc.push(r.read(4).toString(16));
+    return acc.join("");
+  };
+  console.log(asHex(readLsb));
+  console.log(asHex(readMsb));
 };
 
 var tests = [test_blockread, test_blockread2, test_bitread];
