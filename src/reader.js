@@ -4,7 +4,7 @@ goog.provide('ble.ConcatReader');
 goog.provide('ble.b2s');
 
 goog.require('goog.array');
-/** @param {Array.<number>} octets
+/** @param {Array.<number> | Uint8Array} octets
  * @return {string}
  */
 ble.b2s = function(octets) {
@@ -111,8 +111,8 @@ ble.ArrayReader.prototype.viewRange = function() {
 };
 
 /** @constructor
- * @implements {ble.InReader}
- * @param {Array.<ble.InReader>} substreams */
+ * @implements {ble.Reader}
+ * @param {Array.<ble.Reader>} substreams */
 ble.ConcatReader = function(substreams) {
     this.substreams = substreams.slice();
     this.subIx = 0;
@@ -165,7 +165,7 @@ ble.ConcatReader.prototype.readBytes = function(bytes) {
 };
 
 /** @param {number} bytes
- * @return {ble.InReader} */
+ * @return {ble.Reader} */
 ble.ConcatReader.prototype.subReader = function(bytes) {
   if(this.available() < bytes)
     throw "read beyond end";
@@ -184,7 +184,7 @@ ble.ConcatReader.prototype.subReader = function(bytes) {
   return new ble.ConcatReader(blocks);
 };
 
-/** @return {ble.InReader} */
+/** @return {ble.Reader} */
 ble.ConcatReader.prototype.slice = function() {
   var blocks = [];
   var ix = this.subIx;
@@ -223,7 +223,7 @@ ble.BlockReader.fromString = function(str, blockLengths) {
 };
 
 ble.BlockReader.prototype._ready = function() {
-  if(!this.block || this.block.empty())
+  if(!this.done && (!this.block || this.block.empty()))
     this._nextBlock();
 };
 
@@ -276,8 +276,7 @@ ble.BlockReader.prototype.readByte = function() {
   if(this.done)
     throw "read beyond end";
   var ret = this.block.readByte();
-  if(this.block.empty())
-    this.block = null;
+  this._ready();
   return ret;
 };
 
@@ -296,6 +295,7 @@ ble.BlockReader.prototype.readBytes = function(bytes) {
     contiguous.set(this.block.readBytes(toRead), offset);
     offset += toRead;
   }
+  this._ready();
   return contiguous;
 };
 
@@ -311,10 +311,11 @@ ble.BlockReader.prototype.subReader = function(bytes) {
     chunks.push(this.block.subReader(toRead));
     size += toRead;
   }
+  this._ready();
   return new ble.ConcatReader(chunks);
 };
 
-/** @return {ble.Reader} */
+/** @return {ble.BlockReader} */
 ble.BlockReader.prototype.slice = function() {
   var slice = new ble.BlockReader(this.src.slice());
   if(this.block)
