@@ -74,7 +74,7 @@ ble.ArrayReader.prototype.empty = function() {
 
 ble.ArrayReader.prototype.readByte = function() {
   if(this.start >= this.end)
-    throw "read beyond end";
+    throw new Error("read beyond end");
   var result = this.octs[this.start];
   this.start++;
   return result;
@@ -82,7 +82,7 @@ ble.ArrayReader.prototype.readByte = function() {
 
 ble.ArrayReader.prototype.readBytes = function(bytes) { 
   if(this.start > this.end - bytes)
-    throw "read beyond end";
+    throw new Error("read beyond end");
   var result = this.octs.subarray(this.start, this.start + bytes);
   this.start += bytes;
   return result;
@@ -90,7 +90,7 @@ ble.ArrayReader.prototype.readBytes = function(bytes) {
 
 ble.ArrayReader.prototype.subReader = function(bytes) {
   if(this.start > this.end - bytes)
-    throw "read beyond end";
+    throw new Error("read beyond end");
   var result = new ble.ArrayReader(this.aBuf, this.vStart + this.start, bytes);
   this.start += bytes; 
   return result;
@@ -145,7 +145,7 @@ ble.ConcatReader.prototype.empty = function() {
 /** @return {number} */
 ble.ConcatReader.prototype.readByte = function() {
   if(this.subIx >= this.substreams.length)
-    throw "read beyond end";
+    throw new Error("read beyond end");
   return this._s().readByte();
 };
 
@@ -168,7 +168,7 @@ ble.ConcatReader.prototype.readBytes = function(bytes) {
  * @return {ble.Reader} */
 ble.ConcatReader.prototype.subReader = function(bytes) {
   if(this.available() < bytes)
-    throw "read beyond end";
+    throw new Error("read beyond end");
   var blocks = [];
   var sum = 0;
   while(sum < bytes) {
@@ -210,10 +210,10 @@ ble.BlockReader.fromString = function(str, blockLengths) {
   for(var i = 0; i < blockLengths.length; i++) {
     var L = blockLengths[i];
     if(L <= 0 || L > 255)
-      throw "bad block length";
+      throw new Error("bad block length");
     var part = str.substr(0, L);
     if(part.length != L)
-      throw "bad block length";
+      throw new Error("bad block length");
     parts.push(String.fromCharCode(L));
     parts.push(part);
     str = str.substr(L);
@@ -229,7 +229,7 @@ ble.BlockReader.prototype._ready = function() {
 
 ble.BlockReader.prototype._nextBlock = function() {
   if(this.done)
-    throw "bad next block";
+    throw new Error("bad next block");
   var length = this.src.readByte();
   this.block = this.src.subReader(length);
   if(length == 0) {
@@ -249,7 +249,7 @@ ble.BlockReader.prototype._ensure = function(bytes) {
     sum += walk.block.available();
     walk._nextBlock();
   }
-  return sum < bytes; 
+  return sum >= bytes; 
 };
 
 ble.BlockReader.prototype.empty = function() {
@@ -274,7 +274,7 @@ ble.BlockReader.prototype.available = function() {
 ble.BlockReader.prototype.readByte = function() {
   this._ready();
   if(this.done)
-    throw "read beyond end";
+    throw new Error("read beyond end");
   var ret = this.block.readByte();
   this._ready();
   return ret;
@@ -284,7 +284,7 @@ ble.BlockReader.prototype.readByte = function() {
  * @return {Uint8Array} */
 ble.BlockReader.prototype.readBytes = function(bytes) {
   if(!this._ensure(bytes))
-    throw "Read beyond end";
+    throw new Error("Read beyond end");
   var backing = new ArrayBuffer(bytes);
   var contiguous = new Uint8Array(backing);
   var offset = 0;

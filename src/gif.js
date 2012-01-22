@@ -35,7 +35,7 @@ goog.scope(function() {
   Gp.decode = function(reader) {
     var tag = ble.b2s(reader.readBytes(3));
     if(tag != "GIF")
-      throw "bad header";
+      throw new Error("bad header");
     this.version = ble.b2s(reader.readBytes(3));
     this.screen = new ble.Gif.Screen();
     this.screen.decode(reader);
@@ -47,7 +47,7 @@ goog.scope(function() {
       if(sep == G.imageSeparator) {
         var i = new G.Image();
         if(!i.decode(reader)) {
-          throw "bad image";
+          throw new Error("bad image");
         }
         this.blocks.push(i);
 
@@ -55,14 +55,14 @@ goog.scope(function() {
         var label = reader.readByte();
         var blockT = G.blockTypes[label];
         if(!blockT)
-          throw "unknown extension label";
+          throw new Error("unknown extension label");
         var block = new blockT();
         block.decode(reader);
         this.blocks.push(block); 
       } else if(sep == G.trailer) {
         return true;
       } else {
-        throw "bad separator";
+        throw new Error("bad separator");
       }
     }
     return false;
@@ -90,6 +90,13 @@ goog.scope(function() {
     this.sort = sort;
     this.size = size;
     this.values = values; 
+  };
+
+  ble.Gif.Palette.prototype.getColor = function(ix) {
+    var color = this.values.subarray(3*ix, 3*(ix+1));
+    if(color.length != 3)
+      throw new Error("bad color lookup");
+    return color;
   };
 
   /** @constructor
@@ -231,7 +238,7 @@ goog.scope(function() {
 
   G.GraphicControl.prototype.decode = function(r) {
     if(r.readByte() != 4)
-      throw "bad length for graphic control block";
+      throw new Error("bad length for graphic control block");
     var bR = new ble.BitReader(r);
     this.reserved = bR.read(3);
     this.disposal = bR.read(3);
@@ -240,7 +247,7 @@ goog.scope(function() {
     this.delayTime = G.readLeInt(r);
     this.transparentIndex = r.readByte();
     if(r.readByte() != 0)
-      throw "missing block terminator";
+      throw new Error("missing block terminator");
     return true; 
   };
 
@@ -279,7 +286,7 @@ goog.scope(function() {
 
   G.AppExt.prototype.decode = function(reader) {
     if(reader.readByte() != 11)
-      throw "bad application extension";
+      throw new Error("bad application extension");
     this.identifier = ble.b2s(reader.readBytes(8));
     this.auth = ble.b2s(reader.readBytes(3));
     var B = new ble.BlockReader(reader);
@@ -288,7 +295,7 @@ goog.scope(function() {
   };
 
   G.PlainText = function() {
-    throw "unimplemented";
+    throw new Error("unimplemented");
   };
 
   G.PlainText.tag = 0x01;
