@@ -69,11 +69,11 @@ ble.LzwReader.prototype.decodeOne = function() {
     }
     result.unshift(c);
     if(this.last != this.invalidCode) {
-      this.prefix[this.hi] = c;
-      this.suffix[this.hi] = this.last;
+      this.suffix[this.hi] = c;
+      this.prefix[this.hi] = this.last;
     }
   } else {
-    throw "bad lzw code";
+    throw new Error("bad lzw code");
   }
   this.last = code;
   this.hi++;
