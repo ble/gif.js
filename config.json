@@ -1,5 +1,5 @@
 {
-  "id": "instream",
+  "id": "reader",
   "paths": "src",
   "mode": "SIMPLE",
   "level": "VERBOSE",
