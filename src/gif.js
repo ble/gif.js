@@ -217,6 +217,7 @@ goog.scope(function() {
    * @param {number=} disposal
    * @param {boolean=} userInput
    * @param {number=} delayTime
+   * @param {boolean=} transparent
    * @param {number=} transparentIndex
    */
   G.GraphicControl = function(
@@ -224,11 +225,13 @@ goog.scope(function() {
       disposal,
       userInput,
       delayTime,
+      transparent,
       transparentIndex) {
     this.reserved = reserved;
     this.disposal = disposal;
     this.userInput = userInput;
     this.delayTime = delayTime;
+    this.transparent = transparent;
     this.transparentIndex = transparentIndex;
   };
 
