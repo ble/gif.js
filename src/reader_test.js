@@ -2,6 +2,7 @@ goog.require('ble.ArrayReader');
 goog.require('ble.ConcatReader');
 goog.require('ble.BitReader');
 
+var console = window.console;
 
 var test_roundtrip = function() {
 
