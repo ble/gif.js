@@ -71,6 +71,10 @@ ble.Gif.Renderer.prototype._render = function(control, image) {
     }
   }
   var palette = image.palette ? image.palette : this.palette;
+  this._renderPalette(transparent, palette, image);
+};
+
+ble.Gif.Renderer.prototype._renderPalette = function(transparent, palette, image) { 
   var r = image.rect;
   var idat = this.image.data;
   for(var y = 0; y < r.height; y++) {
@@ -87,4 +91,38 @@ ble.Gif.Renderer.prototype._render = function(control, image) {
       idat[o + 3] = (colorIx == transparent) ? 0 : 255;
     }
   }
+};
+
+/** @constructor
+ * @param {ble.Gif} gif
+ * @extends {ble.Gif.Renderer} */
+ble.Gif.PSwapRenderer = function(gif) {
+  ble.Gif.Renderer.call(this, gif);
+  this.nextPal = null;
+};
+goog.inherits(ble.Gif.PSwapRenderer, ble.Gif.Renderer);
+
+ble.Gif.PSwapRenderer.prototype.setNextPalette = function(palette) {
+  this.nextPal = palette;
+};
+
+ble.Gif.PSwapRenderer.prototype._render = function(control, image) {
+  var disposal = this.lastDisposal;
+  var transparent = null;
+  if(control) {
+    this.lastDisposal = control.disposal;
+    if(control.transparent) {
+      transparent = control.transparentIndex;
+    }
+  }
+  var palette;
+  if(this.nextPal) {
+    palette = this.nextPal;
+    this.nextPal = null;
+  } else if(image.palette) {
+    palette = image.palette;
+  } else {
+    palette = this.palette;
+  }
+  this._renderPalette(transparent, palette, image);
 };
