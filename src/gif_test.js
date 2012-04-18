@@ -25,7 +25,7 @@ var test_decode = function() {
   var io = new goog.net.XhrIo();
   io.setResponseType(goog.net.XhrIo.ResponseType.ARRAY_BUFFER);
   goog.events.listen(io, goog.net.EventType.COMPLETE, restOfTest);
-  io.send('gifs/bwanim.gif', 'GET'); 
+  io.send('../gifs/bwanim.gif', 'GET'); 
 };
 
 test_decode();
