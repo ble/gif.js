@@ -1,0 +1,13 @@
+{
+  "id": "bit",
+  "paths": "../src",
+  "mode": "SIMPLE",
+  "level": "VERBOSE",
+  "inputs": [
+    "../src/bit_writer.js",
+    "../src/bit_test.js"
+  ],
+  "externs": [
+    "../externs/typedarray.js"
+  ]
+}
