@@ -7,6 +7,7 @@ goog.provide('ble.ConsoleWriter');
 goog.require('ble.b2s');
 
 goog.scope(function() {
+var b2s = ble.b2s;
 /**
  * @constructor
  * @param {ble.Writer} writer
@@ -14,7 +15,9 @@ goog.scope(function() {
  */
 ble.BitWriter = function(writer, opt_msb) {
   this.dst = writer;
-  this.bits = new Uint32Array(1);
+  this.backing = new ArrayBuffer(4);
+  this.bytes = new Uint8Array(this.backing);
+  this.bits = new Uint32Array(this.backing);
   this.nBits = 0;
   this.msb = Boolean(opt_msb);
 };
@@ -45,7 +48,7 @@ var info = function(x) {
   console.log("info: " + x.toString());
 };
 B.write = function(bits, n) {
-  info("contents: " + this.nBits.toString() + " bits, value = " + this.bits[0].toString());
+  info("contents: " + this.nBits.toString() + " bits, value = '" + b2s(this.bytes) + "' == " + this.bits[0].toString());
   info("writing " + n.toString() + " bits, value = " + bits.toString());
   if(this.msb)
     this._writeMsb(bits, n);
@@ -76,7 +79,7 @@ B._writeLsb = function(bits, n) {
   bits = bits & ((1 << n) - 1);
   var space = this.bitsTillFull();
   if(n > space) {
-    var leftover = space - n;
+    var leftover = n - space;
     var firstBits = bits & ((1 << space) - 1);
     this._writeLsb(firstBits, space);
     bits = bits >> space;

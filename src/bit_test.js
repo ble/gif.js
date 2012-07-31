@@ -1,7 +1,27 @@
+goog.require('ble.ArrayReader');
+goog.require('ble.ArrayWriter');
+goog.require('ble.BitReader');
 goog.require('ble.BitWriter');
-goog.require('ble.ConsoleWriter');
+
+var isMsb = false;
+var text = ble.ArrayReader.fromString("<<Lorem ipsum dolor sit amet>>"); 
+var bitReader = new ble.BitReader(text, isMsb);
 
 
+var receptacle = ble.ArrayWriter.ofCapacity(text.available());
+var bitWriter = new ble.BitWriter(receptacle, isMsb);
+
+while(bitReader.available() > 0) {
+  var bitsToRead = Math.round(Math.random() * 7);
+  bitsToRead = Math.min(bitsToRead, bitReader.available());
+  bitWriter.write(bitReader.read(bitsToRead), bitsToRead);
+}
+
+bitWriter.flushClose();
+var result = ble.b2s(receptacle.writtenSlice());
+console.log(result);
+
+/*
 //Ascii A = 0x41
 //        = 0b01000001
 //
@@ -54,6 +74,7 @@ var runMsb = function(bitArray, atATime) {
 };
 
 timesArray(4, runLsb(aBits.slice(), 2));
+*/
 /*
 var x = aBits.slice();
 var bw = new ble.BitWriter(w, true);

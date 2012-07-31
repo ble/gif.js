@@ -12,6 +12,10 @@ ble.ArrayWriter = function(ary, opt_start, opt_length) {
   this.octs = new Uint8Array(this.aBuf, this.vStart, length);
 };
 
+ble.ArrayWriter.ofCapacity = function(size) {
+  return new ble.ArrayWriter(new ArrayBuffer(size));
+};
+
 var A = ble.ArrayWriter.prototype;
 
 A.write = function(octet) {

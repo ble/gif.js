@@ -18,6 +18,10 @@ ble.BitReader.prototype.empty = function() {
   return !this.nBits && this.src.empty();
 };
 
+ble.BitReader.prototype.available = function() {
+  return this.src.available() * 8 + this.nBits;
+};
+
 ble.BitReader.prototype.read = function(n) {
   return this.msb ? this._readMsb(n) : this._readLsb(n);
 };
