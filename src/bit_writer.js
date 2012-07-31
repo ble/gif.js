@@ -44,12 +44,16 @@ B.flushClose = function() {
   this.dst = null;
 };
 
-var info = function(x) {
-  console.log("info: " + x.toString());
+B._bufferAsString = function() {
+  return b2s(this.bytes);
 };
+
+B._bufferAsInt = function() {
+  return this.bits[0];
+};
+
+
 B.write = function(bits, n) {
-  info("contents: " + this.nBits.toString() + " bits, value = '" + b2s(this.bytes) + "' == " + this.bits[0].toString());
-  info("writing " + n.toString() + " bits, value = " + bits.toString());
   if(this.msb)
     this._writeMsb(bits, n);
   else
@@ -68,7 +72,7 @@ B._writeMsb = function(bits, n) {
     this._writeMsb(bits, n);
   } else {
     var highBit = space; 
-    var val = bits << (highBit - 1);
+    var val = bits << (highBit - n);
     this.bits[0] |= val;
     this.nBits += n;
     this._checkFull();
