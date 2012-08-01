@@ -1,7 +1,21 @@
+goog.provide('ble.Writer');
 goog.provide('ble.ArrayWriter');
 
 goog.scope(function() {
+
+/** @interface */
+ble.Writer = function() {};
+
+/** @param {number} byt */
+ble.Writer.prototype.write = function(byt) {};
+
 var isDef = goog.isDefAndNotNull;
+/**
+ * @constructor
+ * @param {ArrayBuffer} ary
+ * @param {number=} opt_start
+ * @param {number=} opt_length
+ */
 ble.ArrayWriter = function(ary, opt_start, opt_length) {
   this.aBuf = ary;
   this.vStart = isDef(opt_start) ? opt_start : 0;

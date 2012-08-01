@@ -83,9 +83,10 @@ ble.ArrayReader.prototype.readByte = function() {
 ble.ArrayReader.prototype.readBytes = function(bytes) { 
   if(this.start > this.end - bytes)
     throw new Error("read beyond end");
+  
   var result = this.octs.subarray(this.start, this.start + bytes);
   this.start += bytes;
-  return result;
+  return /** @type Uint8Array */ result;
 };
 
 ble.ArrayReader.prototype.subReader = function(bytes) {

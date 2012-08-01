@@ -26,9 +26,10 @@ var testText = "<<Lorem ipsum dolor sit amet>>";
 
 var cases = [
   [true, 24, testText],
-  [false, 24, testText],
+  [false, 24, testText]
 ];
 
+var console = window.console;
 for(var i = 0; i < cases.length; i++) {
   var result = test.apply(this, cases[i]);
   console.log(i.toString() + ' ' + (result ? 'PASSED' : 'FAILED'))

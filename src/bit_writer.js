@@ -1,6 +1,5 @@
-//goog.require('ble.Writer');
+goog.require('ble.Writer');
 
-//goog.provide('ble.Writer');
 goog.provide('ble.BitWriter');
 goog.require('ble.ArrayWriter');
 goog.provide('ble.ConsoleWriter');
@@ -117,14 +116,6 @@ B._flushBytes = function() {
   }
   this.bits[0] = 0;
   this.nBits = 0; 
-};
-
-ble.ConsoleWriter = function() {
-  this.console = window.console;
-};
-
-ble.ConsoleWriter.prototype.write = function(byte) {
-  console.log(byte & 255);
 };
 
 
