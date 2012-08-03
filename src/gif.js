@@ -33,6 +33,9 @@ goog.scope(function() {
   /** @param {ble.Reader} reader
    * @return {boolean} */
   Gp.decode = function(reader) {
+
+    reader = ble.Reader.promote(reader);
+
     var tag = ble.b2s(reader.readBytes(3));
     if(tag != "GIF")
       throw new Error("bad header");
@@ -75,7 +78,7 @@ goog.scope(function() {
   /** @interface */
   G.Block = function() {};
 
-  /** @param {ble.Reader} reader
+  /** @param {ble.ReaderPromoted} reader
    * @return {boolean} */
   G.Block.prototype.decode = function(reader) {};
 
@@ -109,8 +112,8 @@ goog.scope(function() {
    * @implements {ble.Gif.Block}
    * */
   G.Screen = function(width, height, gPalette, cRes, bgIndex, aspect) {
-    this.width = width;
-    this.height = height;
+    this.width = width || NaN;
+    this.height = height || NaN;
     this.globalPalette = gPalette;
     this.colorResolution = cRes;
     this.backgroundIndex = bgIndex;
@@ -122,8 +125,8 @@ goog.scope(function() {
   };
 
   G.Screen.prototype.decode = function(reader) {
-    this.width = G.readLeInt(reader);
-    this.height = G.readLeInt(reader);
+    this.width = reader.readShort_Le();
+    this.height = reader.readShort_Le();
     var bits = new ble.BitReader(reader, true);
     var hasPalette = Boolean(bits.read(1));
     this.colorResolution = bits.read(3);
@@ -166,10 +169,10 @@ goog.scope(function() {
   };
 
   G.Image.prototype.decode = function(reader) {
-    var L = G.readLeInt(reader);
-    var T = G.readLeInt(reader);
-    var W = G.readLeInt(reader);
-    var H = G.readLeInt(reader);
+    var L = reader.readShort_Le();
+    var T = reader.readShort_Le();
+    var W = reader.readShort_Le();
+    var H = reader.readShort_Le();
     this.rect = new goog.math.Rect(L, T, W, H); 
 
     var bits = new ble.BitReader(reader, true);

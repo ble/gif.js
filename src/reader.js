@@ -1,4 +1,5 @@
 goog.provide('ble.Reader');
+goog.provide('ble.ReaderPromoted');
 goog.provide('ble.ArrayReader');
 goog.provide('ble.ConcatReader');
 goog.provide('ble.b2s');
@@ -38,6 +39,31 @@ ble.Reader.prototype.subReader = function(bytes) {};
 
 /** @return {ble.Reader} */
 ble.Reader.prototype.slice = function() {};
+
+//begin semi-dumb extension-method like thing
+/**
+ * @interface
+ * @extends {ble.Reader}
+ */
+ble.ReaderPromoted = function() {};
+
+/** @return {number} */
+ble.ReaderPromoted.prototype.readShort_Le = function() {};
+
+/** @param {ble.Reader} reader
+ *  @return {ble.ReaderPromoted}
+ */
+ble.Reader.promote = function(reader) {
+  reader.readShort_Le = ble.Reader.promote.readShort_Le;
+  return /** @type {ble.ReaderPromoted} */ reader;
+};
+
+/** @type {function(this: ble.Reader) : number} */
+ble.Reader.promote.readShort_Le = function() {
+  var reader = /** @type {ble.Reader} */ this;
+  return reader.readByte() + (reader.readByte() << 8);
+};
+//end semi-dumb extension-method like thing
 
 /** @constructor
  * @implements {ble.Reader}
