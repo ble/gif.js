@@ -43,7 +43,10 @@ var lzwDecodeCases = [
 
   //this case works some non-literal codes and works the eoi code; no 3s
   //should appear in the output.
-  [[0, 1, 2, 3], [0, 6, 2, 7, 1, 9, 8, /* reset! */ 4, 1, 6, /* eoi! */ 5, 3]]
+  [[0, 1, 2, 3], [0, 6, 2, 7, 1, 9, 8, /* reset! */ 4, 1, 6, /* eoi! */ 5, 3]],
+
+  //vanilla case
+  [[0, 1, 2, 3], [0, 6, 2, 7, 1, 9, 8]]
 ];
 
 for(var i = 0; i < lzwDecodeCases.length; i++) {
