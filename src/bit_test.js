@@ -4,6 +4,7 @@ goog.require('ble.BitReader');
 goog.require('ble.BitWriter');
 goog.require('ble.LzwTable');
 goog.require('ble.lzwDecodeAndTable');
+goog.require('ble.lzwEncodeAndTable');
 
 var console = window.console;
 var JSON = window.JSON;
@@ -62,3 +63,7 @@ for(var i = 0; i < lzwDecodeCases.length; i++) {
   console.log("generated code table: " + JSON.stringify(result.table));
 };
 })();
+
+var encAndTable = ble.lzwEncodeAndTable(4, [0,0,0,2,0,0,2,1,0,0,2,1,2,0]);
+console.log(encAndTable.codes.toString());
+console.log(JSON.stringify(encAndTable.table));
