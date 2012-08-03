@@ -149,8 +149,8 @@ ble.LzwDecoder = function(literals) {
   this._prefixCode = null;
   this._done = false;
 
-  this.topCode = null;
-  this.table = null;
+  this.topCode = NaN;
+  this.table = {};
   this._processClear();
 };
 

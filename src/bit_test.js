@@ -5,6 +5,9 @@ goog.require('ble.BitWriter');
 goog.require('ble.LzwTable');
 goog.require('ble.lzwDecodeAndTable');
 
+var console = window.console;
+var JSON = window.JSON;
+
 var test = function(isMsb, maxBitsPerWrite, workText) {
   var source = ble.ArrayReader.fromString(workText); 
   var bitReader = new ble.BitReader(source, isMsb);
@@ -31,7 +34,7 @@ var cases = [
   [false, 24, testText]
 ];
 
-var console = window.console;
+(function(){
 for(var i = 0; i < cases.length; i++) {
   var result = test.apply(this, cases[i]);
   console.log(i.toString() + ' ' + (result ? 'PASSED' : 'FAILED'))
@@ -58,3 +61,4 @@ for(var i = 0; i < lzwDecodeCases.length; i++) {
   console.log("output sequence: " + result.sequence.toString());
   console.log("generated code table: " + JSON.stringify(result.table));
 };
+})();

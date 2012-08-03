@@ -2,6 +2,8 @@ goog.require('ble.BitWriter');
 goog.provide('ble.LzwTable');
 goog.scope(function() {
 
+  /** @typedef { {code: number} } */
+  ble.lzwTableNode;
   /** @constructor */
   ble.LzwTable = function(literalWidth) {
     //constant
@@ -14,10 +16,12 @@ goog.scope(function() {
     this.boundaryCode = 1 << this.codeWidth;
     this.nextCodeV = this.eoi + 1;
 
-    this.rootTable = {};
+    this.rootTable = /** @type {ble.lzwTableNode} */ {code: undefined};
+
     for(var i = 0; i < 1 << this.literalWidth; i++) {
       this.rootTable[i] = {code: i};
     }
+    /** @type {ble.lzwTableNode} */
     this.tableCursor = this.rootTable;
   };
 
@@ -31,13 +35,14 @@ goog.scope(function() {
   
   ble.LzwTable.prototype.encode = function(literal) {
     if(literal in this.tableCursor) {
-      this.tableCursor = this.tableCursor[literal];
+      this.tableCursor = /** @type {ble.lzwTableNode} */ this.tableCursor[literal];
+    
       return [0, null];
     } else {
       var code = this.tableCursor.code;
       var w = this.codeWidth;
       var newTable = {code: this.nextCode()};
-      this.tableCursor[literal] = newTable;
+      this.tableCursor[literal] = /** @type {ble.lzwTableNode} */ newTable;
       this.tableCursor = this.rootTable[literal];
       return [w, code];
     }
