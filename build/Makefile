@@ -1,8 +1,8 @@
 
 BUILD=java -jar ../plovr.jar build
 
-OUTDIR=../build
-SRCS=config.json gif-config.json gif-renderer-config.json
+#OUTDIR=../build
+SRCS=bit-config.json config.json gif-config.json gif-renderer-config.json
 COMPILATIONS=${SRCS:.json=.js} 
 
 .SUFFIXES: .js .json
@@ -11,7 +11,7 @@ COMPILATIONS=${SRCS:.json=.js}
 	@$(BUILD) $< > $*.js
 
 all : $(COMPILATIONS)
-	cp *.js $(OUTDIR)
+	echo "Nothing more!"
 
 clean :
-	rm *.js $(OUTDIR)/*.js
+	rm *.js
