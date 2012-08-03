@@ -162,7 +162,7 @@ goog.scope(function() {
     this.interlace = interlace;
     this.reserved = reserved;
     this.pixels = pixels;
-    this.codeSize = codeSize;
+    this.codeSize = codeSize || -1;
   };
 
   G.Image.prototype.decode = function(reader) {

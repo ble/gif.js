@@ -11,7 +11,7 @@ var test_roundtrip = function() {
       "made glorious summer by this sun of York"];
 
   var make_instances = function() {
-    var result = strings.map(ble.ArrayReader.fromAsciiString);
+    var result = strings.map(ble.ArrayReader.fromString);
     result.push(new ble.ConcatReader(result));
     return result;
   };
