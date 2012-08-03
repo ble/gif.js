@@ -3,6 +3,7 @@ goog.require('ble.ArrayWriter');
 goog.require('ble.BitReader');
 goog.require('ble.BitWriter');
 goog.require('ble.LzwTable');
+goog.require('ble.lzwDecodeAndTable');
 
 var test = function(isMsb, maxBitsPerWrite, workText) {
   var source = ble.ArrayReader.fromString(workText); 
@@ -36,14 +37,21 @@ for(var i = 0; i < cases.length; i++) {
   console.log(i.toString() + ' ' + (result ? 'PASSED' : 'FAILED'))
 };
 
+var lzwDecodeCases = [
+  //this case works the resets, causing code 6 to mean 0-0, 1-1, 2-2, and 3-3.
+  [[0, 1, 2, 3], [0, 6, 4, 1, 6, 4, 2, 6, 4, 3, 6, 4]],
 
-var table = new ble.LzwTable(2);
-console.log(table.encode(0));
-console.log(table.encode(1));
-console.log(table.encode(0));
-console.log(table.encode(1));
-console.log(table.encode(0));
-console.log(table.encode(0));
-console.log(table.encode(0));
-console.log(table.encode(0));
-console.log(table.encode(1));
+  //this case works some non-literal codes and works the eoi code; no 3s
+  //should appear in the output.
+  [[0, 1, 2, 3], [0, 6, 2, 7, 1, 9, 8, /* reset! */ 4, 1, 6, /* eoi! */ 5, 3]]
+];
+
+for(var i = 0; i < lzwDecodeCases.length; i++) {
+  var literals = lzwDecodeCases[i][0];
+  var codes = lzwDecodeCases[i][1];
+  var result = ble.lzwDecodeAndTable(literals, codes);
+  console.log("input literals: " + literals.toString());
+  console.log("input codes: " + codes.toString());
+  console.log("output sequence: " + result.sequence.toString());
+  console.log("generated code table: " + JSON.stringify(result.table));
+};
