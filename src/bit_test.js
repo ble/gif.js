@@ -2,6 +2,7 @@ goog.require('ble.ArrayReader');
 goog.require('ble.ArrayWriter');
 goog.require('ble.BitReader');
 goog.require('ble.BitWriter');
+goog.require('ble.LzwTable');
 
 var test = function(isMsb, maxBitsPerWrite, workText) {
   var source = ble.ArrayReader.fromString(workText); 
@@ -36,5 +37,13 @@ for(var i = 0; i < cases.length; i++) {
 };
 
 
-
-
+var table = new ble.LzwTable(2);
+console.log(table.encode(0));
+console.log(table.encode(1));
+console.log(table.encode(0));
+console.log(table.encode(1));
+console.log(table.encode(0));
+console.log(table.encode(0));
+console.log(table.encode(0));
+console.log(table.encode(0));
+console.log(table.encode(1));
