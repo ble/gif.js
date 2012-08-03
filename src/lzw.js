@@ -1,4 +1,20 @@
+goog.require('goog.structs.Trie');
+
+goog.provide('ble.lzwEncode');
+goog.provide('ble.lzwDecode');
+
+goog.provide('ble.lzwEncodeAndTable');
 goog.provide('ble.lzwDecodeAndTable');
+
+ble.lzwEncode = function(numLiterals, literals) {
+  return ble.lzwEncodeAndTable(numLiterals, literals).codes;
+};
+
+
+ble.lzwDecode = function(literals, codes) {
+  return ble.lzwDecodeAndTable(literals, codes).sequence;
+};
+
 /*
  * LZW encode pseudocode:
  * P <- <empty>
@@ -12,6 +28,69 @@ goog.provide('ble.lzwDecodeAndTable');
  * end for
  * write dictionary[P] to output
  */
+
+ble.lzwEncodeAndTable = function(numLiterals, literals) {
+  var encoder = new ble.LzwEncoder(numLiterals);
+  var result = [];
+  var enc;
+  for(var i = 0 ; i < literals.length; i++) {
+    enc = encoder._encodeOne(literals[i]);
+    if(goog.isDefAndNotNull(enc))
+      result.push(enc);
+  }
+
+  enc = encoder._finishEncode();
+  if(goog.isDefAndNotNull(enc))
+    result.push(enc);
+
+  return {codes: result, table: encoder.table};
+};
+
+/**
+ * @private
+ * @constructor
+ * @param {number} numLiterals
+ */
+ble.LzwEncoder = function(numLiterals) {
+  this.numLiterals = numLiterals;
+  this._initTable();
+};
+
+ble.LzwEncoder.prototype._initTable = function() {
+  var trie = new goog.structs.Trie();
+  for(var i = 0; i < this.numLiterals; i++) {
+    trie.add(String.fromCharCode(i), i);
+  }
+  this.prefix = "";
+  this.prefixCode = null;
+  this.nextCode = this.numLiterals + 2;
+  this.table = trie;
+};
+
+ble.LzwEncoder.prototype._encodeOne = function(literal) {
+  if(0 > literal || literal >= this.numLiterals)
+    throw new Error("bad literal");
+  var nextString = this.prefix + String.fromCharCode(literal);
+  var existingCode = this.table.get(nextString);
+  if(goog.isDefAndNotNull(existingCode)) {
+    this.prefix = nextString;
+    this.prefixCode = existingCode;
+    return undefined;
+  } else {
+    this.table.add(nextString, this.nextCode++);
+
+    var returnedCode = this.prefixCode;
+    this.prefix = String.fromCharCode(literal);
+    this.prefixCode = literal;
+    return returnedCode; 
+  }
+};
+
+ble.LzwEncoder.prototype._finishEncode = function() {
+  if(goog.isDefAndNotNull(this.prefixCode))
+      return this.prefixCode;
+  return undefined;
+};
 
 
 /*
