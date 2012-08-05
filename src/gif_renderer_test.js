@@ -34,7 +34,14 @@ var test_decode = function() {
       var omega = Math.PI / 50;
       var palValues = new Uint8Array(6); 
       var palette = new ble.Gif.Palette(false, 2, palValues);
-      step = function() {
+
+      var lastTime = Date.now();
+      var minFrameTime = 15/*milliseconds*/;
+      step = function(time) {
+        if(time - lastTime < minFrameTime)
+          return;
+        lastTime = time;
+
         palValues[0] = 255;
         palValues[1] = 128 + 127 * Math.cos(theta);
         palValues[2] = palValues[1];
@@ -46,9 +53,8 @@ var test_decode = function() {
         result.renderNext();
         canvas.getContext('2d').putImageData(result.getImage(), 0, 0);
       };
-      var v = function() { step(); window.webkitRequestAnimationFrame(v); };
-      v();
-      //step();
+      var v = function(time) { step(time); window.webkitRequestAnimationFrame(v); };
+      v(Date.now());
     } catch(err) {
       console.log(err.stack);
       console.log(goog.testing.stacktrace.parse_(err.stack));
