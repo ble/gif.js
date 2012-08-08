@@ -1,15 +1,61 @@
 goog.provide('ble.Writer');
+goog.provide('ble.WriterPromoted');
 goog.provide('ble.ArrayWriter');
+goog.provide('ble.BlockWriter');
 
 goog.scope(function() {
+
+var isDef = goog.isDefAndNotNull;
 
 /** @interface */
 ble.Writer = function() {};
 
-/** @param {number} byt */
+/**
+ * @param {number} byt
+ * @return {ble.Writer}
+ */
 ble.Writer.prototype.write = function(byt) {};
 
-var isDef = goog.isDefAndNotNull;
+/**
+ * @param {Uint8Array} bytes
+ * @return {ble.Writer}
+ */
+ble.Writer.prototype.writeBytes = function(bytes) {};
+
+/**
+ * @interface
+ * @extends {ble.Writer}
+ */
+ble.WriterPromoted = function() {};
+
+/**
+ * @param {number} shortI
+ * @return {ble.WriterPromoted}
+ */
+ble.WriterPromoted.prototype.writeShort_Le = function(shortI) {};
+
+/**
+ * @param {number} byt
+ * @return {ble.WriterPromoted}
+ */
+ble.WriterPromoted.prototype.write = function(byt) {};
+
+/**
+ * @param {ble.Writer} writer
+ * @return {ble.WriterPromoted}
+ */
+ble.Writer.promote = function(writer) {
+  writer.writeShort_Le = ble.Writer.promote.writeShort_Le;
+  return /** @type {ble.WriterPromoted}*/ writer;
+};
+
+/** @type {function(this: ble.WriterPromoted, number) : ble.WriterPromoted} */
+ble.Writer.promote.writeShort_Le = function(shortI) {
+  var writer = this;
+  writer.write( shortI       & ((1 << 8) - 1));
+  writer.write((shortI >> 8) & ((1 << 8) - 1));
+  return writer;
+};
 /**
  * @constructor
  * @param {ArrayBuffer} ary
@@ -36,10 +82,75 @@ A.write = function(octet) {
   if(this.start >= this.end)
     throw new Error("write beyond end of array");
   this.octs[this.start++] = octet;
+  return this;
+};
+
+A.writeBytes = function(octets) {
+  if(this.end - this.start < octets.length)
+    throw new Error("write would overflow");
+  for(var i = 0; i < octets.length; i++) {
+    this.octs[i+this.start] = octets[i];
+  }
+  return this;
 };
 
 A.writtenSlice = function() {
   return this.octs.subarray(0, this.start);
+};
+
+/**
+ * @constructor
+ * @implements {ble.Writer}
+ * @param {ble.Writer} writer
+ */
+ble.BlockWriter = function(writer) {
+  this.writer = writer;
+  this.block = new Uint8Array(256);
+  this.block[0] = 0;
+};
+
+var B = ble.BlockWriter.prototype;
+
+B._resetBlock = function() {
+  this.block[0] = 0;
+};
+
+B.write = function(byt) {
+  var nextToFill = ++this.block[0];
+  this.block[nextToFill] = byt;
+  if(nextToFill == 255) {
+    this.writer.writeBytes(this.block);
+    this._resetBlock();
+  }
+  return this;
+};
+
+B.writeBytes = function(bytes) { 
+  var start = this.block[0];
+  var toFillBlock = 255 - start;
+  var inBlock = Math.min(bytes.length, toFillBlock);
+  var remaining = bytes.length - inBlock;
+  for(var i = 0; i < inBlock; i++) {
+    this.block[1 + start + i] = bytes[i];
+  }
+  this.block[0] += inBlock;
+  if(this.block[0] == 255)
+    this.writer.writeBytes(this.block);
+  if(remaining > 0) {
+    var bytesRemaining = /** @type {Uint8Array} */ bytes.subarray(inBlock);
+    return this.writeBytes(bytesRemaining);
+  }
+  return this;
+};
+
+B.flushClose = function() {
+  var bytesToWrite = /** @type {Uint8Array} */ this.block.subarray(0, this.block[0] + 1);
+  this.writer.writeBytes(bytesToWrite);
+  if(this.block[0] > 0) {
+    this.writer.write(0);
+  }
+  this.writer = null;
+  this.block = null;
 };
 
 });

@@ -16,6 +16,18 @@ ble.b2s = function(octets) {
 };
 
 /**
+ * @param {string} str
+ * @return {Uint8Array}
+ */
+ble.as2b = function(str) {
+  var result = new Uint8Array(str.length);
+  goog.array.forEach(
+      str,
+      function(chr, ix) { result[ix] = chr.charCodeAt(0); });
+  return result;
+};
+
+/**
  * @interface
  */
 ble.Reader = function() {};
