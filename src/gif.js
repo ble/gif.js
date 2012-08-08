@@ -1,11 +1,12 @@
 goog.require('ble.Reader');
 goog.require('ble.LzwReader');
+
+goog.require('ble.BitReader');
+goog.require('ble.BitWriter');
+
 goog.require('goog.math.Rect');
 
 goog.provide('ble.Gif');
-
-/** @interface */
-ble.Writer = function() {};
 
 goog.scope(function() {
 
@@ -82,7 +83,7 @@ goog.scope(function() {
    * @return {boolean} */
   G.Block.prototype.decode = function(reader) {};
 
-  /** @param {ble.Writer} writer */
+  /** @param {ble.WriterPromoted} writer */
   G.Block.prototype.encode = function(writer) {};
 
   /** @constructor
@@ -114,14 +115,10 @@ goog.scope(function() {
   G.Screen = function(width, height, gPalette, cRes, bgIndex, aspect) {
     this.width = width || NaN;
     this.height = height || NaN;
-    this.globalPalette = gPalette;
-    this.colorResolution = cRes;
-    this.backgroundIndex = bgIndex;
-    this.aspect = aspect;
-  };
-
-  G.readLeInt = function(reader) {
-    return reader.readByte() + (reader.readByte() << 8);
+    this.globalPalette = gPalette || NaN;
+    this.colorResolution = cRes || NaN;
+    this.backgroundIndex = bgIndex || NaN;
+    this.aspect = aspect || NaN;
   };
 
   G.Screen.prototype.decode = function(reader) {
@@ -148,7 +145,23 @@ goog.scope(function() {
     return true;
   };
 
-  G.Screen.prototype.encode = goog.abstractMethod;
+  G.Screen.prototype.encode = function(writer) {
+    writer.writeShort_Le(this.width)
+          .writeShort_Le(this.height);
+    var bits = new ble.BitWriter(writer, true);
+    var hasPalette = goog.isDefAndNotNull(this.globalPalette);
+    bits.write(hasPalette, 1);
+    bits.write(this.colorResolution, 3);
+    bits.write(hasPalette ? this.globalPalette.sort : false, 1);
+    bits.write(hasPalette ? this.globalPalette.size >> 1 : 0, 3);
+    bits.flushClose();
+    writer.write(this.backgroundIndex);
+    writer.write(this.aspect);
+
+    if(hasPalette) {
+      writer.writeBytes(this.globalPalette.values);
+    }
+  };
 
   /** @constructor
    * @implements {ble.Gif.Block}
@@ -230,17 +243,27 @@ goog.scope(function() {
       delayTime,
       transparent,
       transparentIndex) {
-    this.reserved = reserved;
-    this.disposal = disposal;
-    this.userInput = userInput;
-    this.delayTime = delayTime;
-    this.transparent = transparent;
-    this.transparentIndex = transparentIndex;
+    this.reserved = reserved || NaN;
+    this.disposal = disposal || NaN;
+    this.userInput = userInput || NaN;
+    this.delayTime = delayTime || NaN;
+    this.transparent = transparent || NaN;
+    this.transparentIndex = transparentIndex || NaN;
   };
 
   G.GraphicControl.tag = 0xF9;
 
-  G.GraphicControl.prototype.encode = goog.abstractMethod;
+  G.GraphicControl.prototype.encode = function(w){
+    w.write(4);
+    var bW = new ble.BitWriter(w);
+    bW.write(this.reserved, 3);
+    bW.write(this.disposal, 3);
+    bW.write(this.userInput, 1);
+    bW.write(this.transparent, 1);
+    w.writeShort_Le(this.delayTime);
+    w.write(this.transparentIndex);
+    w.write(0);
+  };
 
   G.GraphicControl.prototype.decode = function(r) {
     if(r.readByte() != 4)
@@ -250,7 +273,7 @@ goog.scope(function() {
     this.disposal = bR.read(3);
     this.userInput = Boolean(bR.read(1));
     this.transparent = Boolean(bR.read(1));
-    this.delayTime = G.readLeInt(r);
+    this.delayTime = r.readShort_Le();
     this.transparentIndex = r.readByte();
     if(r.readByte() != 0)
       throw new Error("missing block terminator");
@@ -266,7 +289,10 @@ goog.scope(function() {
 
   G.Comment.tag = 0xFE; 
 
-  G.Comment.prototype.encode = goog.abstractMethod;
+  G.Comment.prototype.encode = function(writer) {
+    var blockW = new ble.BlockWriter(writer);
+    blockW.writeBytes(ble.as2b(this.text)); 
+  };
 
   G.Comment.prototype.decode = function(reader) {
     var b = new ble.BlockReader(reader);
