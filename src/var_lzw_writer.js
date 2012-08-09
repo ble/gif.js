@@ -9,11 +9,38 @@ goog.provide('ble.Gif.LzwWriter');
  * @param {ble.BitWriter} bitWriter
  */
 ble.Gif.LzwWriter = function(bitDepth, bitWriter) {
+  if(bitDepth > 8)
+    throw new Error('bit depth cannot exceed 8');
   this.bitDepth = bitDepth;
   this.bitWriter = bitWriter;
   this.table = new ble.Gif.LzwWriterTable(bitDepth);
+  this.clear = (1 << bitDepth);
+  this.eoi = this.clear + 1;
 };
 
+
+ble.Gif.LzwWriter.prototype.write = function(literal) {
+  var emitted = this.table._nextCode(literal);
+
+  if(goog.isDefAndNotNull(emitted)) {
+    this.bitWriter.write(emitted.code, emitted.width);
+  }
+
+  if(this.table.currentBits >= 13) {
+    this.bitWriter.write(this.clear, 12);
+    this.table._reset();
+  }
+};
+
+ble.Gif.LzwWriter.prototype.finish = function() {
+  var emitted = this.table._finish();
+
+  if(goog.isDefAndNotNull(emitted)) {
+    this.bitWriter.write(emitted.code, emitted.width);
+  }
+
+  this.bitWriter.write(this.eoi, this.table.currentBits);
+};
 
 /**
  * @constructor
@@ -61,8 +88,11 @@ ble.Gif.LzwWriterTable.prototype._nextCode = function(literal) {
   }
 };
 
-ble.Gif.LzwWriterTable.prototype._finish = function() {
-  var result = ({code: this.prefixCode, width: this.currentBits});
+ble.Gif.LzwWriterTable.prototype._finish = function() { 
   this.table = null;
-  return result;
+  if(goog.isDefAndNotNull(this.prefixCode)) {
+    return ({code: this.prefixCode, width: this.currentBits});
+  } else {
+    return null;
+  }
 };

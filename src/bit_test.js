@@ -2,7 +2,6 @@ goog.require('ble.ArrayReader');
 goog.require('ble.ArrayWriter');
 goog.require('ble.BitReader');
 goog.require('ble.BitWriter');
-goog.require('ble.LzwTable');
 goog.require('ble.lzwDecodeAndTable');
 goog.require('ble.lzwEncodeAndTable');
 
