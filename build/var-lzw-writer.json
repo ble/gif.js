@@ -1,0 +1,7 @@
+{
+  "id": "var_lzw_writer",
+  "paths": "../src",
+  "mode": "SIMPLE",
+  "level": "VERBOSE",
+  "inputs": ["../src/test_var_lzw_writer.js"]
+}

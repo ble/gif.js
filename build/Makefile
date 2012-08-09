@@ -2,7 +2,7 @@
 BUILD=java -jar ../plovr.jar build
 
 #OUTDIR=../build
-SRCS=bit-config.json config.json gif-config.json gif-renderer-config.json
+SRCS=bit-config.json config.json gif-config.json gif-renderer-config.json var-lzw-writer.json
 COMPILATIONS=${SRCS:.json=.js} 
 
 .SUFFIXES: .js .json
