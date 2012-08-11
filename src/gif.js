@@ -247,6 +247,7 @@ goog.scope(function() {
         .write(paletteSort, 1)
         .write(this.reserved, 2)
         .write(paletteSize, 3);
+    bits.flushClose();
     if(hasPalette) {
       writer.writeBytes(this.palette.values);
     }

@@ -91,6 +91,7 @@ A.writeBytes = function(octets) {
   for(var i = 0; i < octets.length; i++) {
     this.octs[i+this.start] = octets[i];
   }
+  this.start += octets.length;
   return this;
 };
 
