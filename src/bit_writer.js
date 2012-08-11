@@ -57,6 +57,7 @@ B.write = function(bits, n) {
     this._writeMsb(bits, n);
   else
     this._writeLsb(bits, n);
+  return this;
 };
 
 B._writeMsb = function(bits, n) {

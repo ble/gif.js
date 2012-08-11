@@ -1,25 +1,25 @@
 goog.require('ble.BitWriter');
 goog.require('goog.structs.Trie');
 
-goog.provide('ble.Gif.LzwWriter');
+goog.provide('ble.LzwWriter');
 
 /**
  * @constructor
  * @param {number} bitDepth
  * @param {ble.BitWriter} bitWriter
  */
-ble.Gif.LzwWriter = function(bitDepth, bitWriter) {
+ble.LzwWriter = function(bitDepth, bitWriter) {
   if(bitDepth > 8)
     throw new Error('bit depth cannot exceed 8');
   this.bitDepth = bitDepth;
   this.bitWriter = bitWriter;
-  this.table = new ble.Gif.LzwWriterTable(bitDepth);
+  this.table = new ble.LzwWriterTable(bitDepth);
   this.clear = (1 << bitDepth);
   this.eoi = this.clear + 1;
 };
 
 
-ble.Gif.LzwWriter.prototype.write = function(literal) {
+ble.LzwWriter.prototype.write = function(literal) {
   var emitted = this.table._nextCode(literal);
 
   if(goog.isDefAndNotNull(emitted)) {
@@ -32,7 +32,7 @@ ble.Gif.LzwWriter.prototype.write = function(literal) {
   }
 };
 
-ble.Gif.LzwWriter.prototype.finish = function() {
+ble.LzwWriter.prototype.finish = function() {
   var emitted = this.table._finish();
 
   if(goog.isDefAndNotNull(emitted)) {
@@ -46,12 +46,12 @@ ble.Gif.LzwWriter.prototype.finish = function() {
  * @constructor
  * @param {number} bitDepth
  */
-ble.Gif.LzwWriterTable = function(bitDepth) {
+ble.LzwWriterTable = function(bitDepth) {
   this.bitDepth = bitDepth;
   this._reset();
 };
 
-ble.Gif.LzwWriterTable.prototype._reset = function() {
+ble.LzwWriterTable.prototype._reset = function() {
   var trie = new goog.structs.Trie();
   for(var i = 0; i < (1 << this.bitDepth); i++) {
     trie.add(String.fromCharCode(i), i);
@@ -63,7 +63,7 @@ ble.Gif.LzwWriterTable.prototype._reset = function() {
   this.currentBits = 1 + this.bitDepth;
 };
 
-ble.Gif.LzwWriterTable.prototype._nextCode = function(literal) {
+ble.LzwWriterTable.prototype._nextCode = function(literal) {
   if(literal >= (1 << this.bitDepth))
     throw new Error("Illegal literal code");
   var nextString = this.prefix + String.fromCharCode(literal);
@@ -88,7 +88,7 @@ ble.Gif.LzwWriterTable.prototype._nextCode = function(literal) {
   }
 };
 
-ble.Gif.LzwWriterTable.prototype._finish = function() { 
+ble.LzwWriterTable.prototype._finish = function() { 
   this.table = null;
   if(goog.isDefAndNotNull(this.prefixCode)) {
     return ({code: this.prefixCode, width: this.currentBits});

@@ -6,6 +6,7 @@ goog.require('ble.BitWriter');
 
 goog.require('goog.math.Rect');
 
+goog.require('ble.LzwWriter');
 goog.provide('ble.Gif');
 
 goog.scope(function() {
@@ -225,7 +226,44 @@ goog.scope(function() {
 
   };
 
-  G.Image.prototype.encode = goog.abstractMethod;
+  G.Image.prototype.encode = function(writer) {
+    writer.writeShort_Le(this.rect.left)  
+          .writeShort_Le(this.rect.top)
+          .writeShort_Le(this.rect.width)
+          .writeShort_Le(this.rect.height);
+    var bits = new ble.BitWriter(writer, true);
+    var hasPalette = this.palette != null;
+    var paletteSort = hasPalette && this.palette.sort;
+    var paletteBits = 0;
+    if(hasPalette) {
+      var paletteSize = this.palette.size;
+      while(paletteSize > 2) {
+        paletteBits++;
+        paletteSize >>= 1;
+      }
+    }
+    bits.write(hasPalette, 1)
+        .write(this.interlace, 1)
+        .write(paletteSort, 1)
+        .write(this.reserved, 2)
+        .write(paletteSize, 3);
+    if(hasPalette) {
+      writer.writeBytes(this.palette.values);
+    }
+    writer.write(this.codeSize);
+    this.encodePixels(writer);
+  };
+
+  G.Image.prototype.encodePixels = function(writer) {
+    var blocks = new ble.BlockWriter(writer);
+    var bits = new ble.BitWriter(blocks);
+    var lzw = new ble.LzwWriter(this.codeSize, bits);
+    for(var i = 0; i < this.pixels.length; i++)
+      lzw.write(this.pixels[i]);
+    lzw.finish();
+    bits.flushClose();
+    blocks.flushClose();
+  };
 
   /** @constructor
    * @implements {ble.Gif.Block}
