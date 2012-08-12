@@ -11,11 +11,14 @@ var result = [];
 
 var lastGif = null;
 var lastResult = null;
+var lastBuffer = null;
+
 var testWithGif = function(uriOfGif, functionOfGif) {
   var decodeAndTest = function() {
     console.log("testing");
     try {
       var buf = this.getResponse();
+      lastBuffer = buf;
       var reader = new ble.ArrayReader(buf);
       var gif = new ble.Gif();
       console.log("Decode success: " + gif.decode(reader).toString());
@@ -60,13 +63,16 @@ var testEncodeImages = function(gif) {
            compareBytes(p.values, q.values);
   };
   var compareBytes = function(a, b) {
+    var differences = 0;
     if(a.length != b.length)
       return false;
     for(var i = 0; i < a.length; i++) {
-      if(a[i] != b[i])
-        return false;
+      if(a[i] != b[i]) {
+        differences++;
+      }
     }
-    return true;
+    console.log(Math.round(100 * differences / a.length));
+    return differences == true;
   };
   var comparePixels = compareBytes;
   var compareRects = function(r, s) {
@@ -90,7 +96,7 @@ var testEncodeImages = function(gif) {
     }
   };
 
-  var images = goog.array.filter(gif.blocks, isImage);
+  var images = goog.array.filter(gif.blocks.slice(0,40), isImage);
   var results = goog.array.map(images, testEncodeImage);
   return results;
 };
