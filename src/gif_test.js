@@ -13,6 +13,7 @@ var lastGif = null;
 var lastResult = null;
 var testWithGif = function(uriOfGif, functionOfGif) {
   var decodeAndTest = function() {
+    console.log("testing");
     try {
       var buf = this.getResponse();
       var reader = new ble.ArrayReader(buf);
@@ -24,7 +25,8 @@ var testWithGif = function(uriOfGif, functionOfGif) {
     } catch(err) {
       console.log(err.stack);
       console.log(goog.testing.stacktrace.parse_(err.stack)); 
-    }
+    } 
+    console.log("tested");
   };
 
   var xhr = new goog.net.XhrIo();
@@ -33,8 +35,65 @@ var testWithGif = function(uriOfGif, functionOfGif) {
   xhr.send(uriOfGif, 'GET');
 };
 
-testWithGif("../gifs/2BC.gif", function(gif){ return testEncode(gif.blocks[1]); });
 
+var testEncodeImages = function(gif) {
+  var Image = ble.Gif.Image;
+  var isImage = function(x) { return x.constructor === Image; };
+  var compareImages = function(i, j) {
+
+    if(i.constructor !== Image || j.constructor !== Image)
+      return false;
+    if(!compareRects(i.rect, j.rect))
+      return false;
+    if(!comparePalettes(i.palette, j.palette))
+      return false;
+    if(i.reserved != j.reserved || i.codeSize != j.codeSize)
+      return false;
+    if(!comparePixels(i.pixels, j.pixels))
+      return false;
+    return true;
+  };
+  var comparePalettes = function(p, q) {
+    return p === q ||
+           p.sort == q.sort &&
+           p.size == q.size &&
+           compareBytes(p.values, q.values);
+  };
+  var compareBytes = function(a, b) {
+    if(a.length != b.length)
+      return false;
+    for(var i = 0; i < a.length; i++) {
+      if(a[i] != b[i])
+        return false;
+    }
+    return true;
+  };
+  var comparePixels = compareBytes;
+  var compareRects = function(r, s) {
+    return r.left == s.left &&
+           r.top == s.top &&
+           r.width == s.width &&
+           r.height == s.height;
+  };
+  var testEncodeImage = function(image) {
+    try {
+      var writer = ble.ArrayWriter.ofCapacity(1024*1024);
+      image.encode(ble.Writer.promote(writer));
+      var encoded = writer.writtenSlice();
+      var encodedBuf = encoded.buffer.slice(0, encoded.length);
+      var reader = new ble.ArrayReader(encodedBuf);
+      var newImage = new ble.Gif.Image();
+      newImage.decode(ble.Reader.promote(reader));
+      return {status: compareImages(image, newImage), i: image, j: newImage};
+    } catch(e) {
+      return {status: e};
+    }
+  };
+
+  var images = goog.array.filter(gif.blocks, isImage);
+  var results = goog.array.map(images, testEncodeImage);
+  return results;
+};
 
 var testEncode = function(block) {
   var writer = ble.ArrayWriter.ofCapacity(1024*1024);
@@ -48,3 +107,7 @@ var testEncode = function(block) {
   newBlock.decode(reader);
   return {writer: writer, reader: reader, decoded: newBlock};
 };
+
+//testWithGif("../gifs/2BC.gif", testEncodeImages);
+testWithGif("../gifs/bwanim.gif", testEncodeImages);
+
