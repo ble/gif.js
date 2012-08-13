@@ -82,7 +82,7 @@ var testEncodeImages = function(gif) {
            r.height == s.height;
   };
   var testEncodeImage = function(image) {
-    try {
+//    try {
       var writer = ble.ArrayWriter.ofCapacity(1024*1024);
       image.encode(ble.Writer.promote(writer));
       var encoded = writer.writtenSlice();
@@ -91,9 +91,9 @@ var testEncodeImages = function(gif) {
       var newImage = new ble.Gif.Image();
       newImage.decode(ble.Reader.promote(reader));
       return {status: compareImages(image, newImage), i: image, j: newImage};
-    } catch(e) {
+//    } catch(e) {
       return {status: e};
-    }
+//    }
   };
 
   var images = goog.array.filter(gif.blocks.slice(0,40), isImage);
