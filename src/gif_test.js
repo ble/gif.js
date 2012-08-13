@@ -1,6 +1,7 @@
 goog.require('ble.Gif');
 goog.require('ble.ArrayReader');
 
+goog.require('goog.fs');
 goog.require('goog.net.XhrIo');
 goog.require('goog.events');
 
@@ -38,7 +39,10 @@ var testWithGif = function(uriOfGif, functionOfGif) {
   xhr.send(uriOfGif, 'GET');
 };
 
-
+/*
+ * Take the images out of the first 40 blocks of a gif and see if a roundtrip
+ * (encode image, then decode image) produces an identical image.
+ */
 var testEncodeImages = function(gif) {
   var Image = ble.Gif.Image;
   var isImage = function(x) { return x.constructor === Image; };
@@ -82,7 +86,6 @@ var testEncodeImages = function(gif) {
            r.height == s.height;
   };
   var testEncodeImage = function(image) {
-//    try {
       var writer = ble.ArrayWriter.ofCapacity(1024*1024);
       image.encode(ble.Writer.promote(writer));
       var encoded = writer.writtenSlice();
@@ -91,9 +94,6 @@ var testEncodeImages = function(gif) {
       var newImage = new ble.Gif.Image();
       newImage.decode(ble.Reader.promote(reader));
       return {status: compareImages(image, newImage), i: image, j: newImage};
-//    } catch(e) {
-      return {status: e};
-//    }
   };
 
   var images = goog.array.filter(gif.blocks.slice(0,40), isImage);
@@ -101,19 +101,16 @@ var testEncodeImages = function(gif) {
   return results;
 };
 
-var testEncode = function(block) {
-  var writer = ble.ArrayWriter.ofCapacity(1024*1024);
-  writer = ble.Writer.promote(writer);
-  block.encode(writer);
-  var encoded = writer.writtenSlice();
-  var encodedBuf = encoded.buffer.slice(0, encoded.length);
-  var reader = new ble.ArrayReader(encodedBuf);
-  reader = ble.Reader.promote(reader);
-  var newBlock = new (block.constructor)();
-  newBlock.decode(reader);
-  return {writer: writer, reader: reader, decoded: newBlock};
+var testWithBlobUrl = function(gif) {
+  var buffer = new ArrayBuffer(1024*1024);
+  var writer = new ble.ArrayWriter(buffer);
+  gif.encode(writer);
+  var partial = buffer.slice(0, writer.start);
+  var blob = goog.fs.getBlob(partial);
+  var url = window.webkitURL.createObjectURL(blob);
+  document.write(url);
 };
-
 //testWithGif("../gifs/2BC.gif", testEncodeImages);
-testWithGif("../gifs/bwanim.gif", testEncodeImages);
+//testWithGif("../gifs/bwanim.gif", testEncodeImages);
+testWithGif("../gifs/bwanim.gif", testWithBlobUrl);
 

@@ -35,6 +35,12 @@ ble.WriterPromoted = function() {};
 ble.WriterPromoted.prototype.writeShort_Le = function(shortI) {};
 
 /**
+ * @param {string} ascii
+ * @return {ble.WriterPromoted}
+ */
+ble.WriterPromoted.prototype.writeAsciiString = function(ascii) {};
+
+/**
  * @param {number} byt
  * @return {ble.WriterPromoted}
  */
@@ -46,6 +52,7 @@ ble.WriterPromoted.prototype.write = function(byt) {};
  */
 ble.Writer.promote = function(writer) {
   writer.writeShort_Le = ble.Writer.promote.writeShort_Le;
+  writer.writeAsciiString = ble.Writer.promote.writeAsciiString;
   return /** @type {ble.WriterPromoted}*/ writer;
 };
 
@@ -54,6 +61,14 @@ ble.Writer.promote.writeShort_Le = function(shortI) {
   var writer = this;
   writer.write( shortI       & ((1 << 8) - 1));
   writer.write((shortI >> 8) & ((1 << 8) - 1));
+  return writer;
+};
+
+/** @type {function(this: ble.WriterPromoted, string) : ble.WriterPromoted} */
+ble.Writer.promote.writeAsciiString = function(ascii) {
+  var writer = this;
+  for(var i = 0; i < ascii.length; i++)
+    writer.write(ascii.charCodeAt(i) & 255);
   return writer;
 };
 /**

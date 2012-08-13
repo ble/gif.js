@@ -73,8 +73,29 @@ goog.scope(function() {
     return false;
   };
 
+  Gp.version = "89a";
+
   /** @param {ble.Writer} writer */
-  Gp.encode = function(writer) {};
+  Gp.encode = function(writer) {
+    writer = ble.Writer.promote(writer);
+
+    writer.writeAsciiString("GIF");
+    writer.writeAsciiString(this.version);
+    this.screen.encode(writer);
+    for(var i = 0; i < this.blocks.length; i++) {
+      var block = this.blocks[i];
+      var constructor = block.constructor;
+
+      if(constructor === G.Image) {
+        writer.write(G.imageSeparator);
+      } else {
+        writer.write(G.extensionSeparator);
+        writer.write(constructor.tag);
+      }
+      block.encode(writer); 
+    }
+    writer.write(G.trailer);
+  };
 
 
   /** @interface */
@@ -353,7 +374,14 @@ goog.scope(function() {
 
   G.AppExt.tag = 0xFF;
 
-  G.AppExt.prototype.encode = goog.abstractMethod;
+  G.AppExt.prototype.encode = function(writer) {
+      writer.write(11);
+      writer.writeAsciiString(this.identifier);
+      writer.writeAsciiString(this.auth);
+      var block = new ble.BlockWriter(writer);
+      block.write(this.data);
+      block.flushClose();
+  };
 
   G.AppExt.prototype.decode = function(reader) {
     if(reader.readByte() != 11)
