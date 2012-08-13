@@ -16,6 +16,8 @@ ble.LzwWriter = function(bitDepth, bitWriter) {
   this.table = new ble.LzwWriterTable(bitDepth);
   this.clear = (1 << bitDepth);
   this.eoi = this.clear + 1;
+
+  this.bitWriter.write(this.clear, this.table.currentBits);
 };
 
 

@@ -167,6 +167,17 @@ goog.scope(function() {
     return true;
   };
 
+  var log2 = function(x) {
+    var y = 0;
+    while(x % 2 == 0 && x > 1) {
+      x = x >> 1;
+      y++;
+    }
+    if(x != 1)
+      throw new Error();
+    return y;
+  };
+
   G.Screen.prototype.encode = function(writer) {
     writer.writeShort_Le(this.width)
           .writeShort_Le(this.height);
@@ -175,7 +186,7 @@ goog.scope(function() {
     bits.write(hasPalette, 1);
     bits.write(this.colorResolution, 3);
     bits.write(hasPalette ? this.globalPalette.sort : false, 1);
-    bits.write(hasPalette ? this.globalPalette.size >> 1 : 0, 3);
+    bits.write(hasPalette ? log2(this.globalPalette.size) - 1 : 0, 3);
     bits.flushClose();
     writer.write(this.backgroundIndex);
     writer.write(this.aspect);
@@ -320,6 +331,7 @@ goog.scope(function() {
     bW.write(this.disposal, 3);
     bW.write(this.userInput, 1);
     bW.write(this.transparent, 1);
+    bW.flushClose();
     w.writeShort_Le(this.delayTime);
     w.write(this.transparentIndex);
     w.write(0);
@@ -352,6 +364,7 @@ goog.scope(function() {
   G.Comment.prototype.encode = function(writer) {
     var blockW = new ble.BlockWriter(writer);
     blockW.writeBytes(ble.as2b(this.text)); 
+    blockW.flushClose();
   };
 
   G.Comment.prototype.decode = function(reader) {
@@ -379,7 +392,7 @@ goog.scope(function() {
       writer.writeAsciiString(this.identifier);
       writer.writeAsciiString(this.auth);
       var block = new ble.BlockWriter(writer);
-      block.write(this.data);
+      block.writeBytes(this.data);
       block.flushClose();
   };
 
