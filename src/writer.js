@@ -147,6 +147,8 @@ B.writeBytes = function(bytes) {
 B.flushClose = function() {
   var bytesToWrite = /** @type {Uint8Array} */ this.block.subarray(0, this.block[0] + 1);
   this.writer.writeBytes(bytesToWrite);
+  if(this.block[0] > 0)
+    this.writer.write(0);
   this.writer = null;
   this.block = null;
 };

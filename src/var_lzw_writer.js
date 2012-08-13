@@ -81,7 +81,7 @@ ble.LzwWriterTable.prototype._nextCode = function(literal) {
     this.prefixCode = literal;
     //add code
     this.table.add(nextString, this.nextCode++);
-    if(this.nextCode >= (1 << this.currentBits))
+    if(this.nextCode > (1 << this.currentBits))
       this.currentBits++;
 
     return ({code: returnedCode, width: returnedWidth});
