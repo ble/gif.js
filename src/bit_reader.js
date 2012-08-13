@@ -1,5 +1,4 @@
 goog.require('ble.Reader');
-goog.require('ble.trace');
 
 goog.provide('ble.BitReader');
 
@@ -25,7 +24,6 @@ ble.BitReader.prototype.available = function() {
 
 ble.BitReader.prototype.read = function(n) {
   var result = this.msb ? this._readMsb(n) : this._readLsb(n);
-  ble.trace.trace({type: "BitReader.read()", bits: result, n: n});
   return result;
 };
 

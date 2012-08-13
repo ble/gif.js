@@ -1,5 +1,4 @@
 goog.require('ble.Writer');
-goog.require('ble.trace');
 
 goog.provide('ble.BitWriter');
 goog.require('ble.ArrayWriter');
@@ -54,7 +53,6 @@ B._bufferAsInt = function() {
 
 
 B.write = function(bits, n) {
-  ble.trace.trace({type: "BitWriter.write()", bits: bits, n: n});
   if(this.msb)
     this._writeMsb(bits, n);
   else
