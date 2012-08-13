@@ -18,7 +18,7 @@ goog.scope(function() {
    * @param {Array.<ble.Gif.Block>=} blocks
    */
   ble.Gif = function(version, screen, blocks) {
-    this.version = version;
+    this.version = version || "89a";
     this.screen = screen;
     this.blocks = blocks;
   };
@@ -72,8 +72,6 @@ goog.scope(function() {
     }
     return false;
   };
-
-  Gp.version = "89a";
 
   /** @param {ble.Writer} writer */
   Gp.encode = function(writer) {
@@ -167,7 +165,7 @@ goog.scope(function() {
     return true;
   };
 
-  var log2 = function(x) {
+  ble.inversePowerOf2 = function(x) {
     var y = 0;
     while(x % 2 == 0 && x > 1) {
       x = x >> 1;
@@ -186,7 +184,7 @@ goog.scope(function() {
     bits.write(hasPalette, 1);
     bits.write(this.colorResolution, 3);
     bits.write(hasPalette ? this.globalPalette.sort : false, 1);
-    bits.write(hasPalette ? log2(this.globalPalette.size) - 1 : 0, 3);
+    bits.write(hasPalette ? ble.inversePowerOf2(this.globalPalette.size) - 1 : 0, 3);
     bits.flushClose();
     writer.write(this.backgroundIndex);
     writer.write(this.aspect);
@@ -380,9 +378,9 @@ goog.scope(function() {
    * @param {Uint8Array=} data
    */
   G.AppExt = function(identifier, auth, data) {
-    this.identifier = identifier;
-    this.auth = auth;
-    this.data = data;
+    this.identifier = identifier || "XXXXXXXX";
+    this.auth = auth || "YYY";
+    this.data = data || new Uint8Array(0);
   };
 
   G.AppExt.tag = 0xFF;
