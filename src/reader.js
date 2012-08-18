@@ -11,7 +11,7 @@ goog.require('goog.array');
 ble.b2s = function(octets) {
   return goog.array.map(
       octets,
-      function(x) { return String.fromCharCode(x & 0xFF); }).
+      function(x) { return String.fromCharCode(x); }).
     join("");
 };
 
@@ -21,9 +21,9 @@ ble.b2s = function(octets) {
  */
 ble.as2b = function(str) {
   var result = new Uint8Array(str.length);
-  goog.array.forEach(
-      str,
-      function(chr, ix) { result[ix] = chr.charCodeAt(0); });
+  for(var i = 0; i < str.length; i++) {
+    result[i] = str.charCodeAt(i);
+  }
   return result;
 };
 
