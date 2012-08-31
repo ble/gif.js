@@ -3,33 +3,6 @@ goog.require('ble.Gif');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.ui.Component');
 
-var doStuff = function() {
-  var component = new ble.TestDraw(500, 500);
-  component.render(document.body);
-  var raf = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
-  var callback;
-  var lastStart = Date.now();
-  var lastTime = Date.now();
-  callback = function(time) {
-    raf(callback);
-    if(time - lastTime < 45)
-      return;
-    lastTime = time;
-    var omega = Math.PI / 1000;
-    var phi = omega * (time - lastStart);
-
-    if(phi >= 2 * Math.PI) {
-      lastStart = time;
-      phi = 0;
-    }
-
-    var alpha = Math.cos(phi);
-    drawThing(alpha, component);
-    
-  };
-  callback(Date.now());
-};
-
 var drawThing = function(scale, component) {
   var ctx = component.context();
   ctx.clearRect(-0.5, -0.5, 1, 1);
@@ -122,6 +95,41 @@ ble.TestDraw.prototype.context = function() {
 
 ble.TestDraw.prototype.doneWithContext = function(ctx) {
   ctx.restore();
+};
+
+ble.TestDraw.prototype.getImageCopy = function() {
+  return this.rawContext()
+             .getImageData(0, 0, this.width, this.height);
+};
+
+ble.TestDraw.prototype.hide = function() {
+  var el = this.getElement();
+  el.style['display'] = 'none';
+};
+
+var doStuff = function() {
+  var component = new ble.TestDraw(500, 500);
+  component.render(document.body);
+  component.hide();
+  var dh = component.getDomHelper();
+
+  var phi;
+  var steps = 40;
+  var scale = 4;
+  var imgUrl;
+  for(var i = 0; i < steps; i++) {
+    phi = (2 * Math.PI) * i / steps;
+    drawThing(Math.cos(phi), component);
+    imgUrl = component.getElement().toDataURL();
+    var image = dh.createDom(
+        'img',
+        { 'src': imgUrl,
+          'height': component.height / scale,
+          'width': component.width / scale,
+          'style': 'display:block;' });
+    dh.appendChild(document.body, image);
+  };
+  window.console.log('done.');
 };
 
 doStuff();
