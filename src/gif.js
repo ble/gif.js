@@ -415,6 +415,8 @@ goog.scope(function() {
 
   G.PlainText.prototype.decode = goog.abstractMethod;
 
+  //Create a table mapping from an extension block's tag to the
+  //corresponding constructor.
   (function(){
     var cs = [
       G.GraphicControl,
@@ -426,5 +428,13 @@ goog.scope(function() {
       G.blockTypes[cs[i].tag] = cs[i];
     }
   })();
+
+  /**
+   * @param {ble.Gif.Block} block
+   * @return {boolean}
+   */
+  G.isImage = function(block) {
+    return block.constructor === G.Image;
+  };
 
 });
