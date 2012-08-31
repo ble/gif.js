@@ -48,7 +48,8 @@ goog.scope(function() {
     this.blocks = [];
     while(!reader.empty()) {
       var sep = reader.readByte();
-
+      if(sep === 0)
+        continue;
       if(sep == G.imageSeparator) {
         var i = new G.Image();
         if(!i.decode(reader)) {
