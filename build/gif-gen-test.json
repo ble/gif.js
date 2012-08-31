@@ -1,0 +1,9 @@
+{
+  "id": "gif-gen-test",
+  "paths": "../src",
+  "mode": "SIMPLE",
+  "level": "VERBOSE",
+  "inputs": [
+    "../src/gif_gen_test.js"
+  ]
+}
