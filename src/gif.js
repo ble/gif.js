@@ -1,3 +1,4 @@
+goog.require('ble.trace');
 goog.require('ble.Reader');
 goog.require('ble.LzwReader');
 
@@ -18,7 +19,7 @@ goog.scope(function() {
    * @param {Array.<ble.Gif.Block>=} blocks
    */
   ble.Gif = function(version, screen, blocks) {
-    this.version = version || "89a";
+    this.version = version || '89a';
     this.screen = screen;
     this.blocks = blocks;
   };
@@ -133,13 +134,18 @@ goog.scope(function() {
    * @param {number=} aspect
    * @implements {ble.Gif.Block}
    * */
+
+  G.checkNum = function(x) {
+    return goog.isDefAndNotNull(x) ? x : NaN;
+  }
+  var checkNum = G.checkNum;
   G.Screen = function(width, height, gPalette, cRes, bgIndex, aspect) {
-    this.width = width || NaN;
-    this.height = height || NaN;
-    this.globalPalette = gPalette || NaN;
-    this.colorResolution = cRes || NaN;
-    this.backgroundIndex = bgIndex || NaN;
-    this.aspect = aspect || NaN;
+    this.width = checkNum(width);
+    this.height = checkNum(height);
+    this.globalPalette = checkNum(gPalette);
+    this.colorResolution = checkNum(cRes);
+    this.backgroundIndex = checkNum(bgIndex);
+    this.aspect = checkNum(aspect);
   };
 
   G.Screen.prototype.decode = function(reader) {
@@ -286,10 +292,13 @@ goog.scope(function() {
     this.encodePixels(writer);
   };
 
+  G.Image.encoded = 0;
+
   G.Image.prototype.encodePixels = function(writer) {
     var blocks = new ble.BlockWriter(writer);
     var bits = new ble.BitWriter(blocks);
     var lzw = new ble.LzwWriter(this.codeSize, bits);
+    ble.trace.start("encode image " + (G.Image.encoded++));
     for(var i = 0; i < this.pixels.length; i++)
       lzw.write(this.pixels[i]);
     lzw.finish();
@@ -313,12 +322,12 @@ goog.scope(function() {
       delayTime,
       transparent,
       transparentIndex) {
-    this.reserved = reserved || NaN;
-    this.disposal = disposal || NaN;
-    this.userInput = userInput || NaN;
-    this.delayTime = delayTime || NaN;
-    this.transparent = transparent || NaN;
-    this.transparentIndex = transparentIndex || NaN;
+    this.reserved = checkNum(reserved);
+    this.disposal = checkNum(disposal);
+    this.userInput = checkNum(userInput);
+    this.delayTime = checkNum(delayTime);
+    this.transparent = checkNum(transparent);
+    this.transparentIndex = checkNum(transparentIndex);
   };
 
   G.GraphicControl.tag = 0xF9;
