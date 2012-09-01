@@ -15,6 +15,8 @@ var lastResult = null;
 var lastBuffer = null;
 
 var testWithGif = function(uriOfGif, functionOfGif) {
+  document.write(uriOfGif);
+  document.write(functionOfGif.toString());
   var decodeAndTest = function() {
     console.log("testing");
     try {
@@ -110,7 +112,15 @@ var testWithBlobUrl = function(gif) {
   var url = window.webkitURL.createObjectURL(blob);
   document.write(url);
 };
-//testWithGif("../gifs/2BC.gif", testEncodeImages);
-//testWithGif("../gifs/bwanim.gif", testEncodeImages);
-testWithGif("../gifs/bwanim.gif", testWithBlobUrl);
-
+testWithGif("../gifs/broken.gif", function(x){return x;});
+//testWithGif("../gifs/lasercat.gif", function(x){return x;});
+//testWithGif("../gifs/bwanim.gif", function(x){return x;});
+//testWithGif("../gifs/bwanim.gif", testWithBlobUrl);
+//testWithGif("../gifs/Everdraed_01b.gif", testWithBlobUrl);
+/*
+testWithGif("../gifs/Everdraed_01b.gif", function(x){
+  var blocks = x.blocks;
+  var imgBlocks = blocks.filter(ble.Gif.isImage);
+  return imgBlocks;
+});
+*/

@@ -26,6 +26,7 @@ ble.LzwWriter.prototype.write = function(literal) {
 
   if(goog.isDefAndNotNull(emitted)) {
     this.bitWriter.write(emitted.code, emitted.width);
+    ble.trace.trace({code: emitted.code, width: emitted.width});
   }
 
   if(this.table.currentBits >= 13) {
@@ -98,3 +99,56 @@ ble.LzwWriterTable.prototype._finish = function() {
     return null;
   }
 };
+
+/**
+ * @constructor
+ */
+ble.LzwTrie = function(bitSize) {
+  this.bitSize = bitSize;
+  this._reset();
+};
+
+ble.LzwTrie.prototype.invalidCode = -1;
+
+
+ble.LzwTrie.prototype._reset = function() {
+  this.codeTable = new Int16Array(1 << 20);
+  for(var i = 0; i < this.codeTable.length; i++) {
+    this.codeTable[i] = this.invalidCode;
+  }
+  for(var i = 0; i < (1 << this.bitSize); i++) {
+    this._addCode(this.invalidCode, i);    
+  }
+  this.prefix = [];
+  this.prefixCode = this.invalidCode;
+  this.nextCode = (1 << this.bitDepth) + 2;
+  this.currentBits = 1 + this.bitSize;
+};
+
+ble.LzwTrie
+
+/*
+  LZW encoding requires a map from literal sequences to code values.  
+  The mapping will be provided by a trie. 
+  
+  Each trie node corresponds to one literal sequence to code value mapping,
+  from S to C; the code value, C, is stored in the node and the literal sequence,
+  S, is encoded in the path from the root to the node.
+
+  Each node has N children, where N is the number of literals; the Kth child
+  of a node (S, C) points to the node (S | K, C'), where S | K is the sequence
+  S with literal K appended to the end and C' is the code for that sequence.
+
+  The root node corresponds to an empty sequence and an invalid code; all
+  sequences start at the root and all valid LZW codes represent non-empty
+  sequences.
+
+  When the trie is first initialized, all the N children of the root node are
+  initialized, as the code for a sequence consisting of a single literal is
+  always that literal value.
+
+  The trie is represented by a table storing the edges of the trie.
+  The edges are stored as a mapping from (C, K) to C', where C and C' are the
+  codes of the parent and child nodes and K is the final literal in the child
+  node's sequence.
+*/

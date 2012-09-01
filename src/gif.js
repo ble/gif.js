@@ -83,6 +83,7 @@ goog.scope(function() {
     writer.writeAsciiString(this.version);
     this.screen.encode(writer);
     for(var i = 0; i < this.blocks.length; i++) {
+      window.console.log(i);
       var block = this.blocks[i];
       var constructor = block.constructor;
 
@@ -242,6 +243,7 @@ goog.scope(function() {
     }
 
     this.codeSize = reader.readByte();
+    ble.trace.start("decode image");
     this.decodePixels(new ble.BlockReader(reader));
     return true;
   };
