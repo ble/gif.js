@@ -20,7 +20,7 @@ ble.Trace.prototype.trace = function(x) {
 };
 
 ble.Trace.prototype.start = function(tracing) {
-  if(goog.isDefAndNotNull(this.tracing) || !goog.isDefAndNotNull(tracing))
+  if(!goog.isDefAndNotNull(tracing))
     throw new Error();
   this.tracing = tracing;
 };
