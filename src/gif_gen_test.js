@@ -1,11 +1,16 @@
-
+goog.require('goog.fs');
 goog.require('ble.Gif');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.ui.Component');
 
+window.gif = null;
 var drawThing = function(scale, component) {
   var ctx = component.context();
-  ctx.clearRect(-0.5, -0.5, 1, 1);
+
+  ctx.beginPath();
+  ctx.fillStyle = "fff";
+  ctx.fillRect(-0.5, -0.5, 1, 1);
+  
   var range = [];
   for(var i = -1.0 - 1/14; i <= 1.0; i+= 1/7)
     range.push(i);
@@ -14,7 +19,6 @@ var drawThing = function(scale, component) {
   var uvFn = function(x,y) {
     return [x + scale * Math.sin(q*y) / 3, y - scale * Math.cos(q*x) / 8];
   }
-//  var sign = function(x) { return x > 0 ? 1 : (x == 0 ? 0 : -1);
   uvFn = function(x,y) {
     var th = Math.atan2(y, x);
     var r = Math.sqrt(x*x+y*y);
@@ -107,6 +111,25 @@ ble.TestDraw.prototype.hide = function() {
   el.style['display'] = 'none';
 };
 
+var imageDataToPixels = function(dataIn, pixelsOut, inversePalette) {
+  var count = {};
+  for(var i = 0; i < (dataIn.length >> 2); i++) {
+    inversePalette(dataIn, i << 2, pixelsOut, i);
+    var pv = pixelsOut[i];
+    if(!goog.isDefAndNotNull(count[pv]))
+      count[pv] = 0;
+    count[pv]++;
+  }
+  window.console.log(count);
+};
+
+var monochrome = function(imgData, imgIx, palOut, palIx) {
+  palOut[palIx] =
+    (imgData[imgIx + 0] == 255 &&
+     imgData[imgIx + 1] == 255 &&
+     imgData[imgIx + 2] == 255) ? 1 : 0;
+};
+
 var doStuff = function() {
   var component = new ble.TestDraw(500, 500);
   component.render(document.body);
@@ -114,22 +137,68 @@ var doStuff = function() {
   var dh = component.getDomHelper();
 
   var phi;
-  var steps = 40;
-  var scale = 4;
-  var imgUrl;
+  var steps = 10;
+
+  var rect = new goog.math.Rect(0, 0, component.width, component.height);
+  var palette = new ble.Gif.Palette(0, 2, new Uint8Array(6));
+  var pVals = palette.values;
+  pVals[0] = 0;   pVals[1] = 0;   pVals[2] = 0;
+  pVals[3] = 255; pVals[4] = 255; pVals[5] = 255;
+
+  var screen = new ble.Gif.Screen(
+      component.width,
+      component.height,
+      palette,
+      1,
+      10,
+      0);
+
+  var gif = new ble.Gif('89a', screen, []);
+  var interlace = false;
+  var reserved = 0;
+  var codeSize = 2;
+
+
+  var loopBlock = new ble.Gif.AppExt('NETSCAPE', '2.0', new Uint8Array(3));
+  loopBlock.data[0] = 1;
+  gif.blocks.push(loopBlock);
+
   for(var i = 0; i < steps; i++) {
     phi = (2 * Math.PI) * i / steps;
     drawThing(Math.cos(phi), component);
-    imgUrl = component.getElement().toDataURL();
-    var image = dh.createDom(
-        'img',
-        { 'src': imgUrl,
-          'height': component.height / scale,
-          'width': component.width / scale,
-          'style': 'display:block;' });
-    dh.appendChild(document.body, image);
+    var imgData = component.getImageCopy();
+    var pixels = new Uint8Array(rect.width * rect.height);
+    var image = new ble.Gif.Image(
+        rect,
+        null,
+        interlace,
+        reserved,
+        pixels,
+        codeSize);
+    imageDataToPixels(imgData.data, pixels, monochrome);
+
+    var gc = new ble.Gif.GraphicControl(
+      5,
+      0,
+      false,
+      6,
+      false,
+      3);
+    gif.blocks.push(gc);
+    gif.blocks.push(image);
+    window.console.log(i);
   };
+
+  var buffer = new ArrayBuffer(1 << 22); //4 megabytes
+  var writer = new ble.ArrayWriter(buffer);
+  gif.encode(writer);
+  var partial = buffer.slice(0, writer.start);
+  var blob = goog.fs.getBlob(partial);
+  var url = window.webkitURL.createObjectURL(blob);
+  document.write(url);
   window.console.log('done.');
+  window.gif = gif;
 };
+
 
 doStuff();
