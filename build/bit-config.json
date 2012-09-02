@@ -4,8 +4,7 @@
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [
-    "../src/bit_writer.js",
-    "../src/bit_test.js"
+    "../src/test/bit_test.js"
   ],
   "externs": [
     "../externs/typedarray.js"

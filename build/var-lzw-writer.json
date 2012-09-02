@@ -3,5 +3,5 @@
   "paths": "../src",
   "mode": "SIMPLE",
   "level": "VERBOSE",
-  "inputs": ["../src/test_var_lzw_writer.js"]
+  "inputs": ["../src/test/test_var_lzw_writer.js"]
 }

@@ -4,6 +4,6 @@
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [
-    "../src/reader_test.js"
+    "../src/test/reader_test.js"
   ]
 }

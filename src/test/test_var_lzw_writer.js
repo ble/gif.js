@@ -1,4 +1,4 @@
-goog.require('ble.Gif.LzwWriter');
+goog.require('ble.LzwWriter');
 
 
 
@@ -36,7 +36,7 @@ var Case = function(literalBits, literalSequence) {
 };
 
 Case.prototype.codes = function() {
-  var table = new ble.Gif.LzwWriterTable(this.bits);
+  var table = new ble.LzwWriterTable(this.bits);
   var emits = goog.array.map(this.seq, function(x) {
     var code = table._nextCode(x);
     if(goog.isDefAndNotNull(code))
@@ -52,7 +52,7 @@ Case.prototype.run = function() {
     log({code: val, bits: n});
   });
 
-  var lzw = new ble.Gif.LzwWriter(this.bits, debugWriter);
+  var lzw = new ble.LzwWriter(this.bits, debugWriter);
   for(var i = 0; i < this.seq.length; i++) {
     var literal = this.seq[i];
     log("Writing '" + literal + "'");

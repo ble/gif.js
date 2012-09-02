@@ -7,6 +7,32 @@ goog.require('goog.events');
 
 goog.require('goog.testing.stacktrace');
 
+goog.require('ble.Picker');
+
+var gifPicker = new ble.Picker("../gifs/gifs.json", "../gifs");
+var gifList = new ble.PickerList();
+gifList.setPicker(gifPicker);
+
+gifPicker.loadFileList();
+gifList.render(document.body);
+
+goog.events.listen(
+    gifList,
+    gifPicker.EventTypes.LOADED_FILE,
+    function(event) {
+      console.log(event.buffer);
+      console.log(event.buffer.byteLength);
+    });
+//
+//goog.events.listen(
+//    gifList,
+//    goog.ui.Component.EventType.ACTION,
+//    function(event) {
+//      var menuItem = /** @type {goog.ui.MenuItem} */ event.target;
+//      var model = menuItem.getModel();
+//      console.log(model);
+//    });
+/*
 var console = window.console;
 var result = [];
 
@@ -38,11 +64,13 @@ var testWithGif = function(uriOfGif, functionOfGif) {
   goog.events.listen(xhr, goog.net.EventType.COMPLETE, decodeAndTest);
   xhr.send(uriOfGif, 'GET');
 };
+*/
 
 /*
  * Take the images out of the first 40 blocks of a gif and see if a roundtrip
  * (encode image, then decode image) produces an identical image.
  */
+/*
 var testEncodeImages = function(gif) {
   var Image = ble.Gif.Image;
   var isImage = function(x) { return x.constructor === Image; };
@@ -113,4 +141,4 @@ var testWithBlobUrl = function(gif) {
 //testWithGif("../gifs/2BC.gif", testEncodeImages);
 //testWithGif("../gifs/bwanim.gif", testEncodeImages);
 testWithGif("../gifs/bwanim.gif", testWithBlobUrl);
-
+*/
