@@ -1,0 +1,8 @@
+Next steps:
+  Structure code for execution in a WebWorker;
+  Frame diffing for better efficiency;
+  Annotated hex view;
+✓ Render animation to gif;
+  Testing across many gifs / gif forensics;
+  Render true color gif;
+  Palette optimization and dithering;
