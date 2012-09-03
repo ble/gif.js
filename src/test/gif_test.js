@@ -27,13 +27,13 @@ goog.events.listen(
     gifList,
     gifPicker.EventTypes.LOADED_FILE,
     function(event) {
-      console.log(event.buffer);
-      console.log(event.buffer.byteLength);
+      console.log(event);
       var gif = new ble.Gif();
       var reader = new ble.ArrayReader(event.buffer);
       console.log('decode success: ' + gif.decode(reader).toString());
       lastGif = gif;
       dh.removeChildren(descriptionContainer);
+      dh.appendChild(descriptionContainer, dh.createDom('h1', null, event.path));
       dh.appendChild(descriptionContainer, ble.Gif.describeGif(gif));
     });
 //

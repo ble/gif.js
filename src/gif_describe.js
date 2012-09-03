@@ -28,7 +28,11 @@ goog.scope(function() {
   };
 
   Gif.prototype.describeBlocks = function(dh, blocks) {
-    return "asdf";
+    var argArray = ['ol', null];
+    for(var i = 0; i < blocks.length; i++) {
+      argArray.push(blocks[i].describeMe(dh));
+    }
+    return dh.createDom.apply(dh, argArray);
   }
 
   var Screen = Gif.Screen;
@@ -60,6 +64,40 @@ goog.scope(function() {
     }
 
     return dh.createDom.apply(dh, argArray);
+  };
+
+  ble.Gif.Image.prototype.describeMe = function(dh) {
+    var topLeft = labelledListItem(dh, 'left, top', this.rect.left + ', ' + this.rect.top);
+    var size = labelledListItem(dh, 'size', this.rect.width + ' x ' + this.rect.height);
+    var rect = dh.createDom('ul', null, topLeft, size);
+    var palette = labelledListItem(dh, 'palette', goog.isDefAndNotNull(this.palette) ? this.palette.describeMe(dh) : 'null');
+    var interlace = labelledListItem(dh, 'interlace', this.interlace.toString());
+    var reserved = labelledListItem(dh, 'reserved', this.reserved.toString());
+    var codeSize = labelledListItem(dh, 'codeSize', this.codeSize.toString());
+    var pixels = labelledListItem(dh, 'pixels.length', this.pixels.length.toString());
+    var desc = dh.createDom('ul', null, rect, palette, interlace, reserved, codeSize, pixels);
+    return dh.createDom('li', null, 'Image', desc);
+  };
+
+  ble.Gif.GraphicControl.prototype.describeMe = function(dh) {
+    var props = ['reserved', 'disposal', 'userInput', 'delayTime', 'transparent', 'transparentIndex'];
+    var items = ['ul', null];
+    for(var i = 0; i < props.length; i++) {
+      items.push(labelledListItem(dh, props[i], this[props[i]].toString()));
+    }
+    var desc = dh.createDom.apply(dh, items);
+    return dh.createDom('li', null, 'GraphicControl', desc);
+  };
+
+  ble.Gif.Comment.prototype.describeMe = function(dh) {
+    return dh.createDom('li', null, 'Comment: ', this.text);
+  };
+
+  ble.Gif.AppExt.prototype.describeMe = function(dh) {
+    var id = labelledListItem(dh, 'identifier', this.identifier);
+    var au = labelledListItem(dh, '"authentication"', this.auth);
+    var data = labelledListItem(dh, 'data', goog.array.map(this.data, function(x) { return x.toString(); }).join(', '));
+    return dh.createDom('li', null, 'AppExt', dh.createDom('ul', null, id, au, data));
   };
 
 
