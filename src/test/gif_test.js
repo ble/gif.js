@@ -8,13 +8,19 @@ goog.require('goog.events');
 goog.require('goog.testing.stacktrace');
 
 goog.require('ble.Picker');
+goog.require('ble.Gif.describeGif');
 
 var gifPicker = new ble.Picker("../gifs/gifs.json", "../gifs");
 var gifList = new ble.PickerList();
+var lastGif;
 gifList.setPicker(gifPicker);
 
 gifPicker.loadFileList();
 gifList.render(document.body);
+
+var dh = gifList.getDomHelper();
+var descriptionContainer = dh.createDom('div');
+document.body.appendChild(descriptionContainer);
 
 goog.events.listen(
     gifList,
@@ -22,6 +28,12 @@ goog.events.listen(
     function(event) {
       console.log(event.buffer);
       console.log(event.buffer.byteLength);
+      var gif = new ble.Gif();
+      var reader = new ble.ArrayReader(event.buffer);
+      console.log('decode success: ' + gif.decode(reader).toString());
+      lastGif = gif;
+      dh.removeChildren(descriptionContainer);
+      dh.appendChild(descriptionContainer, ble.Gif.describeGif(gif));
     });
 //
 //goog.events.listen(
