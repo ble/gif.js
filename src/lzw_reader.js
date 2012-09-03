@@ -31,7 +31,7 @@ ble.LzwReader.prototype._reset = function() {
 
 };
 
-ble.LzwReader.prototype.maxWidth = 16;
+ble.LzwReader.prototype.maxWidth = 12;
 ble.LzwReader.prototype.invalidCode = 0xFFFF;
 
 ble.LzwReader.prototype._readCode = function() {
