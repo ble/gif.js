@@ -6,58 +6,12 @@ goog.require('goog.ui.Component');
 window.gif = null;
 var drawThing = function(scale, component) {
   var ctx = component.context();
-
+  var luminance = Math.round(scale);
+  ctx.fillStyle = 'rgb(' + [luminance, luminance, luminance].toString() + ')';
   ctx.beginPath();
-  ctx.fillStyle = "fff";
   ctx.fillRect(-0.5, -0.5, 1, 1);
-  
-  var range = [];
-  for(var i = -1.0 - 1/14; i <= 1.0; i+= 1/7)
-    range.push(i);
-
-  var q = Math.PI;
-  var uvFn = function(x,y) {
-    return [x + scale * Math.sin(q*y) / 3, y - scale * Math.cos(q*x) / 8];
-  }
-  uvFn = function(x,y) {
-    var th = Math.atan2(y, x);
-    var r = Math.sqrt(x*x+y*y);
-    th += Math.cos(10*r*scale) * scale;
-    var unit = [-Math.sin(th) / 5, Math.cos(th) / 5];
-    return [Math.cos(th)*r, Math.sin(th)*r];
-  }
-  pathUVs(ctx, range, range, 0.01, 1.0, uvFn);
-  ctx.lineWidth *= 2;
-  ctx.stroke();
   component.doneWithContext(ctx);
-
 };
-
-var pathUVs = function(ctx, us, vs, step, mag, uvFn) {
-  ctx.beginPath();
-  for(var i = 0; i < us.length; i++) {
-    var u = us[i];
-    var v = -mag;
-    var xy = uvFn(u, v);
-    ctx.moveTo(xy[0], xy[1]);
-    for(v = v + step; v <= mag; v += step) {
-      xy = uvFn(u, v);
-      ctx.lineTo(xy[0], xy[1]);
-    }
-  }
-  for(var i = 0; i < vs.length; i++) {
-    var u = -mag;
-    var v = vs[i];
-    var xy = uvFn(u, v);
-    ctx.moveTo(xy[0], xy[1]);
-    for(u = u + step; u <= mag; u += step) {
-      xy = uvFn(u, v);
-      ctx.lineTo(xy[0], xy[1]);
-    }
-  }
-
-};
-
 /**
  * @constructor
  * @extends {goog.ui.Component}
@@ -123,6 +77,10 @@ var imageDataToPixels = function(dataIn, pixelsOut, inversePalette) {
   window.console.log(count);
 };
 
+var greyScale = function(imgData, imgIx, palOut, palIx) {
+  palOut[palIx] = imgData[imgIx];
+};
+
 var monochrome = function(imgData, imgIx, palOut, palIx) {
   palOut[palIx] =
     (imgData[imgIx + 0] == 255 &&
@@ -131,20 +89,23 @@ var monochrome = function(imgData, imgIx, palOut, palIx) {
 };
 
 var doStuff = function() {
-  var component = new ble.TestDraw(500, 500);
+  var component = new ble.TestDraw(50, 50);
   component.render(document.body);
   component.hide();
   var dh = component.getDomHelper();
 
   var phi;
-  var steps = 10;
+  var steps = 100;
 
   var rect = new goog.math.Rect(0, 0, component.width, component.height);
-  var palette = new ble.Gif.Palette(0, 2, new Uint8Array(6));
-  var pVals = palette.values;
-  pVals[0] = 0;   pVals[1] = 0;   pVals[2] = 0;
-  pVals[3] = 255; pVals[4] = 255; pVals[5] = 255;
 
+  var pVals = new Uint8Array(768);
+  for(var i = 0; i < pVals.length / 3; i++) {
+    pVals[3 * i]     = i;
+    pVals[3 * i + 1] = i;
+    pVals[3 * i + 2] = i;
+  } 
+  var palette = new ble.Gif.Palette(0, pVals.length / 3, pVals);
   var screen = new ble.Gif.Screen(
       component.width,
       component.height,
@@ -153,10 +114,16 @@ var doStuff = function() {
       0,
       0);
 
+
+  var log2Ceil = function(x) {
+    var n = 0;
+    while(x > 1) { x /= 2; n++; }
+    return n;
+  };
   var gif = new ble.Gif('89a', screen, []);
   var interlace = false;
   var reserved = 0;
-  var codeSize = 2;
+  var codeSize = log2Ceil(palette.size);
 
 
   var loopBlock = new ble.Gif.AppExt('NETSCAPE', '2.0', new Uint8Array(3));
@@ -164,8 +131,9 @@ var doStuff = function() {
   gif.blocks.push(loopBlock);
 
   for(var i = 0; i < steps; i++) {
-    phi = (2 * Math.PI) * i / steps;
-    drawThing(Math.cos(phi), component);
+    phi = Math.PI * i / steps;
+    var z = Math.cos(phi) * Math.cos(phi);
+    drawThing(255 * z, component);
     var imgData = component.getImageCopy();
     var pixels = new Uint8Array(rect.width * rect.height);
     var image = new ble.Gif.Image(
@@ -175,18 +143,24 @@ var doStuff = function() {
         reserved,
         pixels,
         codeSize);
-    imageDataToPixels(imgData.data, pixels, monochrome);
+    imageDataToPixels(imgData.data, pixels, greyScale);
 
     var gc = new ble.Gif.GraphicControl(
       0,
       1,
       false,
-      6,
+      2,
       false,
       0);
     gif.blocks.push(gc);
     gif.blocks.push(image);
     window.console.log(i);
+    var preview = document.createElement('img');
+    preview.src = component.getElement().toDataURL();
+    preview.width = 50;
+    preview.height = 50;
+    preview.style['display'] = 'inline-block';
+    document.body.appendChild(preview);
   };
 
   var buffer = new ArrayBuffer(1 << 22); //4 megabytes
@@ -195,7 +169,7 @@ var doStuff = function() {
   var partial = buffer.slice(0, writer.start);
   var blob = goog.fs.getBlob(partial);
   var url = window.webkitURL.createObjectURL(blob);
-  document.write(url);
+  document.write('<div>'+url+'</div>');
   window.console.log('done.');
   window.gif = gif;
 };
