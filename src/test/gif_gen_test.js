@@ -14,7 +14,7 @@ var drawThing = function(scale, component) {
   var h = (scale / 255) - 0.5;
   luminance = 255 - luminance;
   ctx.strokeStyle = 'rgb(' + [luminance, luminance, luminance].toString() + ')';
-  ctx.strokeWidth *= 2;
+  ctx.lineWidth *= 5;
   ctx.beginPath();
   ctx.moveTo(-0.5, h);
   ctx.lineTo(0.5, h);
@@ -98,7 +98,7 @@ var monochrome = function(imgData, imgIx, palOut, palIx) {
 };
 
 var doStuff = function() {
-  var component = new ble.TestDraw(50, 50);
+  var component = new ble.TestDraw(100, 100);
   component.render(document.body);
   component.hide();
   var dh = component.getDomHelper();
@@ -165,11 +165,11 @@ var doStuff = function() {
     gif.blocks.push(image);
     window.console.log(i);
     var preview = document.createElement('img');
-    preview.src = component.getElement().toDataURL();
+//    preview.src = component.getElement().toDataURL();
     preview.width = 50;
     preview.height = 50;
     preview.style['display'] = 'inline-block';
-    document.body.appendChild(preview);
+//    document.body.appendChild(preview);
   };
 
   var buffer = new ArrayBuffer(1 << 22); //4 megabytes
