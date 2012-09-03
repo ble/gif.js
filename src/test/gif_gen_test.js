@@ -10,6 +10,15 @@ var drawThing = function(scale, component) {
   ctx.fillStyle = 'rgb(' + [luminance, luminance, luminance].toString() + ')';
   ctx.beginPath();
   ctx.fillRect(-0.5, -0.5, 1, 1);
+
+  var h = (scale / 255) - 0.5;
+  luminance = 255 - luminance;
+  ctx.strokeStyle = 'rgb(' + [luminance, luminance, luminance].toString() + ')';
+  ctx.strokeWidth *= 2;
+  ctx.beginPath();
+  ctx.moveTo(-0.5, h);
+  ctx.lineTo(0.5, h);
+  ctx.stroke();
   component.doneWithContext(ctx);
 };
 /**
@@ -169,7 +178,7 @@ var doStuff = function() {
   var partial = buffer.slice(0, writer.start);
   var blob = goog.fs.getBlob(partial);
   var url = window.webkitURL.createObjectURL(blob);
-  document.write('<div>'+url+'</div>');
+  document.write('<img src="'+url+'"/>');
   window.console.log('done.');
   window.gif = gif;
 };
