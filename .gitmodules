@@ -1,3 +1,6 @@
 [submodule "lib/google-closure-library"]
 	path = lib/google-closure-library
 	url = git@github.com:ble/google-closure-library.git
+[submodule "lib/subcanvas"]
+	path = lib/subcanvas
+	url = git@github.com:ble/telepaint.git
