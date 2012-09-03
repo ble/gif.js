@@ -10,6 +10,7 @@ goog.require('goog.testing.stacktrace');
 goog.require('ble.Picker');
 goog.require('ble.Gif.describeGif');
 
+var console = window.console;
 var gifPicker = new ble.Picker("../gifs/gifs.json", "../gifs");
 var gifList = new ble.PickerList();
 var lastGif;

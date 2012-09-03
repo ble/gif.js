@@ -20,7 +20,7 @@ ble.Picker = function(pathToFileList, basePath) {
   this.pathToFileList = pathToFileList;
   this.basePath = basePath;
   this.paths = null;
-  this.buffers = null;
+  this.buffers = {};
 };
 goog.inherits(ble.Picker, goog.events.EventTarget);
 
@@ -54,12 +54,11 @@ ble.Picker.prototype.fullPath = function(index) {
 }
 
 ble.Picker.prototype.fileIsReady = function(index) {
-  return goog.isDefAndNotNull(this.buffers)
-      && goog.isDefAndNotNull(this.buffers[index]);
+  return goog.isDefAndNotNull(this.buffers[index]);
 };
 
 ble.Picker.prototype.readyFile = function(index) {
-  var already = this.fileIsReady();
+  var already = this.fileIsReady(index);
   if(!already) {
     var xhr = new goog.net.XhrIo();
     xhr.setResponseType(goog.net.XhrIo.ResponseType.ARRAY_BUFFER);
@@ -86,11 +85,8 @@ ble.Picker.prototype._xhrFileComplete = function(event) {
   this.dispatchEvent(eventOut);
 }
 
-ble.Picker.prototype.loadFile = function(index) {
-  this.buffers = this.buffers || {};
-  if(!goog.isDefAndNotNull(this.buffers[index])) {
-
-  }
+ble.Picker.prototype.getFile = function(index) {
+  return this.buffers && this.buffers[index];
 };
 
 /**
@@ -114,7 +110,7 @@ ble.PickerList.prototype.enterDocument = function() {
         this.picker,
         this.picker.EventTypes.LOADED_FILE,
         listener);
-    var listener = goog.bind(this._processAction, this);
+    listener = goog.bind(this._processAction, this);
     goog.events.listen(
         this,
         goog.ui.Component.EventType.ACTION,
@@ -127,10 +123,10 @@ ble.PickerList.prototype._processAction = function(event) {
   var model = menuItem.getModel();
   if(goog.isDefAndNotNull(model)) {
     if(this.picker.readyFile(model)) {
-      var event = new goog.events.Event(this.picker.EventTypes.LOADED_FILE, this.picker);
+      event = new goog.events.Event(this.picker.EventTypes.LOADED_FILE, this.picker);
       event.pickerIndex = model;
-      event.path = this.picker.fullPath(index);
-      event.buffer = buffer;
+      event.path = this.picker.fullPath(model);
+      event.buffer = this.picker.getFile(model);
       this.dispatchEvent(event);
     }
   }

@@ -30,6 +30,14 @@ goog.scope(function() {
   G.trailer = 0x3B;
 
   G.blockTypes = {};
+
+  G.checkNum = function(x) {
+    return goog.isDefAndNotNull(x) ? x : NaN;
+  }
+  var checkNum = G.checkNum;
+
+
+
   var Gp = ble.Gif.prototype;
 
   
@@ -134,11 +142,6 @@ goog.scope(function() {
    * @param {number=} aspect
    * @implements {ble.Gif.Block}
    * */
-
-  G.checkNum = function(x) {
-    return goog.isDefAndNotNull(x) ? x : NaN;
-  }
-  var checkNum = G.checkNum;
   G.Screen = function(width, height, gPalette, cRes, bgIndex, aspect) {
     this.width = checkNum(width);
     this.height = checkNum(height);

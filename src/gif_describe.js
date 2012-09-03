@@ -2,18 +2,20 @@ goog.require('ble.Gif');
 goog.require('goog.dom.DomHelper');
 
 goog.provide('ble.Gif.describeGif');
-
-goog.scope(function() {
-
-  ble.Gif.describeGif = function(gif) {
-    return gif.describeMe(new goog.dom.DomHelper());
-  };
+(function() {
 
   var labelledItem = function(dh, label, value) {
     return dh.createDom('div', null, label, ': ', value);
   };
   var labelledListItem = function(dh, label, value) { 
     return dh.createDom('li', null, label, ': ', value);
+  };
+
+
+goog.scope(function() {
+
+  ble.Gif.describeGif = function(gif) {
+    return gif.describeMe(new goog.dom.DomHelper());
   };
 
   var Gif = ble.Gif;
@@ -63,3 +65,4 @@ goog.scope(function() {
 
 
 });
+})();
