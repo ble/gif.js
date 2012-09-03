@@ -149,8 +149,8 @@ var doStuff = function() {
       component.width,
       component.height,
       palette,
-      1,
-      10,
+      0,
+      0,
       0);
 
   var gif = new ble.Gif('89a', screen, []);
@@ -178,12 +178,12 @@ var doStuff = function() {
     imageDataToPixels(imgData.data, pixels, monochrome);
 
     var gc = new ble.Gif.GraphicControl(
-      5,
       0,
+      1,
       false,
       6,
       false,
-      3);
+      0);
     gif.blocks.push(gc);
     gif.blocks.push(image);
     window.console.log(i);

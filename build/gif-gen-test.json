@@ -4,6 +4,6 @@
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [
-    "../src/gif_gen_test.js"
+    "../src/test/gif_gen_test.js"
   ]
 }
