@@ -3,6 +3,9 @@ Next steps:
   Frame diffing for better efficiency;
   Annotated hex view;
 ✓ Render animation to gif;
+  Create animation immediately from a scribble;
+    Work with subcanvas as a dependency;
+      Figure out a good way to structure closure libs for reusing
   Testing across many gifs / gif forensics;
   Render true color gif;
   Palette optimization and dithering;
