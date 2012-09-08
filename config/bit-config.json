@@ -1,12 +1,12 @@
 {
   "id": "bit",
-  "paths": "../src",
+  "paths": "../src/lib",
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [
     "../src/test/bit_test.js"
   ],
   "externs": [
-    "../externs/typedarray.js"
+    "../src/externs/typedarray.js"
   ]
 }

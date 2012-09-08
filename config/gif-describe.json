@@ -1,10 +1,10 @@
 {
-  "id": "gif_renderer",
+  "id": "gif-describe",
   "paths": "../src/lib",
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [
-    "../src/demo/gif_renderer_test.js"
+    "../src/demo/gif_describe.js"
   ],
   "externs": [
     "../src/externs/typedarray.js"

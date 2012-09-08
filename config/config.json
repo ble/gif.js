@@ -1,6 +1,6 @@
 {
   "id": "reader",
-  "paths": "../src",
+  "paths": "../src/lib",
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [

@@ -1,6 +1,6 @@
 {
   "id": "var_lzw_writer",
-  "paths": "../src",
+  "paths": "../src/lib",
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": ["../src/test/test_var_lzw_writer.js"]

@@ -1,5 +1,7 @@
-goog.require('goog.fs');
 goog.require('ble.Gif');
+goog.require('ble.palette');
+
+goog.require('goog.fs');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.ui.Component');
 
@@ -86,17 +88,6 @@ var imageDataToPixels = function(dataIn, pixelsOut, inversePalette) {
   window.console.log(count);
 };
 
-var greyScale = function(imgData, imgIx, palOut, palIx) {
-  palOut[palIx] = imgData[imgIx];
-};
-
-var monochrome = function(imgData, imgIx, palOut, palIx) {
-  palOut[palIx] =
-    (imgData[imgIx + 0] == 255 &&
-     imgData[imgIx + 1] == 255 &&
-     imgData[imgIx + 2] == 255) ? 1 : 0;
-};
-
 var doStuff = function() {
   var component = new ble.TestDraw(100, 100);
   component.render(document.body);
@@ -152,7 +143,10 @@ var doStuff = function() {
         reserved,
         pixels,
         codeSize);
-    imageDataToPixels(imgData.data, pixels, greyScale);
+    ble.palette.imageDataToPixels(
+        imgData.data,
+        pixels,
+        ble.palette.inverseGreyscale);
 
     var gc = new ble.Gif.GraphicControl(
       0,
