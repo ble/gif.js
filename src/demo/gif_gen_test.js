@@ -115,11 +115,7 @@ var doStuff = function() {
       0);
 
 
-  var log2Ceil = function(x) {
-    var n = 0;
-    while(x > 1) { x /= 2; n++; }
-    return n;
-  };
+  var log2Ceil = ble.util.log2Ceil;
   var gif = new ble.Gif('89a', screen, []);
   var interlace = false;
   var reserved = 0;
