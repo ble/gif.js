@@ -1,0 +1,7 @@
+{
+  "id" : "scribble_to_gif",
+  "paths" : "../src/lib",
+  "mode" : "RAW",
+  "level" : "VERBOSE",
+  "inputs" : "../src/demo/scribble_to_gif.js"
+}
