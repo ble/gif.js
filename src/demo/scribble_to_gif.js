@@ -5,6 +5,8 @@ goog.require('ble.palette');
 
 goog.require('ble.scribble.UI');
 goog.require('ble.scribble.Canvas');
+goog.require('ble.interval.Gapless');
+goog.require('ble.scribble.Drawing');
 
 goog.require('goog.dom.DomHelper');
 goog.require('goog.ui.Component');
@@ -60,11 +62,15 @@ ble.saveDrawing = function(sCanvas, millisPerFrame) {
     throw new Error();
 
   var rect = new goog.math.Rect(0, 0, sCanvas.width_px, sCanvas.height_px);
-  window.drawSurface = new ble.PxCanvas(rect.width, rect.height);
+  var drawSurface = new ble.PxCanvas(rect.width, rect.height);
   drawSurface.render(document.body);
   drawSurface.getElement().style['display'] = 'none';
 
   var drawing = sCanvas.drawing;
+  drawing = new ble.scribble.Drawing(
+      0, /*start time*/
+      (new ble.interval.Gapless()).tweakedIntervals(drawing.byStart) /*items*/);
+  window.d = drawing;
   var length = drawing.length();
   var start = drawing.start();
   var ctx = drawSurface.getContext();
