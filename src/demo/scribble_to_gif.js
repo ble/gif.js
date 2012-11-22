@@ -99,11 +99,10 @@ ble.saveDrawing = function(sCanvas, frames) {
 
   var dh = new goog.dom.DomHelper();
 
-  var graphicControl = function() { 
+  var graphicControl = function(delayTime) { 
     var reserved=0,
         disposal=1,
         userInput=false,
-        delayTime=2,
         transparent=false,
         transparentIndex=0;
     return new ble.Gif.GraphicControl(
@@ -117,7 +116,9 @@ ble.saveDrawing = function(sCanvas, frames) {
   var palette = gif.screen.globalPalette;
   for(var position = 0; position < length; position += millisPerFrame) {
     console.log(position);
-    blocks.push(graphicControl());
+
+    var isLast = position + millisPerFrame >= length;
+    blocks.push(graphicControl(isLast ? 200 : 2));
 
     ctx.fillStyle='rgb(255,255,255)';
     ctx.fillRect(0, 0, drawSurface.width, drawSurface.height);
@@ -173,6 +174,6 @@ goog.events.listen(
     button,
     goog.ui.Component.EventType.ACTION,
     function() {
-      ble.saveDrawing(ui.canvas, 50);
+      ble.saveDrawing(ui.canvas, 100);
     });
 });
