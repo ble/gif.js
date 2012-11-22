@@ -51,6 +51,25 @@ ble.PxCanvas.prototype.enterDocument = function() {
   this.getContext().save();
 };
 
+
+
+ble.monochromeGif = function(w, h) {
+  var rect = new goog.math.Rect(0, 0, w, h);
+  var paletteValues = new Uint8Array(6);
+  for(var i = 0; i < 6; i++)
+    paletteValues[i] = i > 2 ? 255 : 0;
+  var palette = new ble.Gif.Palette(0, 2, paletteValues);
+  var screen = new ble.Gif.Screen(w, h, palette, 0, 0, 0);
+  var gif = new ble.Gif('89a', screen, []);
+  return gif;
+};
+
+ble.loopBlock = function() {
+  var block = new ble.Gif.AppExt('NETSCAPE', '2.0', new Uint8Array(3));
+  block.data[0] = 1;
+  return block;
+};
+
 /**
  * @param {ble.scribble.Canvas} sCanvas
  * @param {number} frames
@@ -74,38 +93,55 @@ ble.saveDrawing = function(sCanvas, frames) {
   var start = drawing.start();
   var ctx = drawSurface.getContext();
 
+  var gif = ble.monochromeGif(rect.width, rect.height);
+  var blocks = gif.blocks;
+  blocks.push(ble.loopBlock());
 
-  var pVals = new Uint8Array(6);
-  pVals[0] = 0;
-  pVals[1] = 0;
-  pVals[2] = 0;
-  pVals[3] = 255;
-  pVals[4] = 255;
-  pVals[5] = 255;
-
-  var palette = new ble.Gif.Palette(0, pVals.length/3, pVals);
   var dh = new goog.dom.DomHelper();
 
+  var graphicControl = function() { 
+    var reserved=0,
+        disposal=1,
+        userInput=false,
+        delayTime=2,
+        transparent=false,
+        transparentIndex=0;
+    return new ble.Gif.GraphicControl(
+        reserved,
+        disposal,
+        userInput,
+        delayTime,
+        transparent,
+        transparentIndex);
+  };
+  var palette = gif.screen.globalPalette;
   for(var position = 0; position < length; position += millisPerFrame) {
-    window.console.log(position);
+    console.log(position);
+    blocks.push(graphicControl());
+
     ctx.fillStyle='rgb(255,255,255)';
     ctx.fillRect(0, 0, drawSurface.width, drawSurface.height);
     
     drawing.at(start+position).draw(ctx);
 
     var pixels = new Uint8Array(rect.width * rect.height);
+    ble.palette.imageDataToPixels(
+        ctx.getImageData(rect.left, rect.top, rect.width, rect.height).data,
+        pixels,
+        ble.palette.inverseMonochrome);
+    
+    //can't have a code size of 1...
+    var codeSize = Math.max(2, ble.util.log2Ceil(palette.size));
     var image = new ble.Gif.Image(
         rect,
         null, //palette
         false, //interlace
         0, //reserved,
         pixels,
-        ble.util.log2Ceil(palette.size) /* code size */);
-    ble.palette.imageDataToPixels(
-        ctx.getImageData(rect.left, rect.top, rect.width, rect.height).data,
-        pixels,
-        ble.palette.inverseMonochrome);
-
+        codeSize);
+   
+    blocks.push(image);
+/*
     var url = drawSurface.getElement().toDataURL();
     dh.appendChild(
         document.body,
@@ -114,7 +150,17 @@ ble.saveDrawing = function(sCanvas, frames) {
           {   'src': url,
               'width': rect.width / 4,
               'height': rect.height / 4 }));
-  };
+              */
+  }
+  var buffer = new ArrayBuffer(1 << 22); //4 megs
+  var writer = new ble.ArrayWriter(buffer);
+  window.console.log("encoding...");
+  gif.encode(writer);
+  var partial = new Uint8Array(buffer.slice(0, writer.start));
+  var blob = new Blob([partial], {'type': 'image\/gif'});
+  var url = window.webkitURL.createObjectURL(blob);
+  document.write('<img src="'+url+'"/>');
+  window.console.log("done encoding.");
 };
 
 var ui = new ble.scribble.UI(320, 240);
