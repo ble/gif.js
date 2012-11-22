@@ -53,11 +53,15 @@ ble.PxCanvas.prototype.enterDocument = function() {
 
 /**
  * @param {ble.scribble.Canvas} sCanvas
- * @param {number} millisPerFrame
+ * @param {number} frames
  */
-ble.saveDrawing = function(sCanvas, millisPerFrame) {
+ble.saveDrawing = function(sCanvas, frames) {
+  var drawing = sCanvas.drawing;
+  drawing = new ble.scribble.Drawing(
+      drawing.start(), /*start time*/
+      (new ble.interval.Gapless()).tweakedIntervals(drawing.byStart) /*items*/);
 
-  window.console.log("hello thar");
+  var millisPerFrame = drawing.length() / frames;
   if(millisPerFrame <= 0)
     throw new Error();
 
@@ -66,11 +70,6 @@ ble.saveDrawing = function(sCanvas, millisPerFrame) {
   drawSurface.render(document.body);
   drawSurface.getElement().style['display'] = 'none';
 
-  var drawing = sCanvas.drawing;
-  drawing = new ble.scribble.Drawing(
-      0, /*start time*/
-      (new ble.interval.Gapless()).tweakedIntervals(drawing.byStart) /*items*/);
-  window.d = drawing;
   var length = drawing.length();
   var start = drawing.start();
   var ctx = drawSurface.getContext();
