@@ -1,5 +1,6 @@
 goog.require('ble.Gif');
 goog.require('ble.palette');
+goog.require('ble.util.log2Ceil');
 
 goog.require('goog.fs');
 goog.require('goog.dom.DomHelper');
@@ -166,7 +167,8 @@ var doStuff = function() {
   var writer = new ble.ArrayWriter(buffer);
   gif.encode(writer);
   var partial = buffer.slice(0, writer.start);
-  var blob = goog.fs.getBlob(partial);
+//  var blob = goog.fs.getBlob(partial);
+  var blob = new Blob([new Uint8Array(partial)], {'type': 'image\/gif'});
   var url = window.webkitURL.createObjectURL(blob);
   document.write('<img src="'+url+'"/>');
   window.console.log('done.');
