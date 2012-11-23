@@ -1,5 +1,6 @@
 {
   "id": "reader",
+  "closure-library": "../deps/google-closure-library/closure/goog",
   "paths": "../src/lib",
   "mode": "SIMPLE",
   "level": "VERBOSE",

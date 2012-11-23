@@ -1,12 +1,10 @@
 {
   "id": "gif-describe",
+  "closure-library": "../deps/google-closure-library/closure/goog",
   "paths": "../src/lib",
   "mode": "SIMPLE",
   "level": "VERBOSE",
   "inputs": [
     "../src/demo/gif_describe.js"
-  ],
-  "externs": [
-    "../src/externs/typedarray.js"
   ]
 }
