@@ -2,7 +2,7 @@
   "id" : "scribble_to_gif",
   "closure-library": "../deps/google-closure-library/closure/goog",
   "paths" : "../src/lib",
-  "mode" : "RAW",
+  "mode" : "SIMPLE",
   "level" : "VERBOSE",
   "inputs" : "../src/demo/scribble_to_gif.js"
 }

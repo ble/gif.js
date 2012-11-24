@@ -35,7 +35,8 @@ ble.Gif.Renderer.prototype._canvas = null;
 ble.Gif.Renderer.prototype._makeImage = function(w, h) {
   if(!ble.Gif.Renderer.prototype._canvas) {
     var dh = new goog.dom.DomHelper();
-    ble.Gif.Renderer.prototype._canvas = dh.createElement("canvas");
+    ble.Gif.Renderer.prototype._canvas =
+      /** @type {HTMLCanvasElement} */ dh.createElement("canvas");
   }
   return this._canvas.getContext("2d").createImageData(this.width, this.height);
 };

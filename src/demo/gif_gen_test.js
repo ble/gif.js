@@ -106,7 +106,7 @@ var doStuff = function() {
     pVals[3 * i + 1] = i;
     pVals[3 * i + 2] = i;
   } 
-  var palette = new ble.Gif.Palette(0, pVals.length / 3, pVals);
+  var palette = new ble.Gif.Palette(false, pVals.length / 3, pVals);
   var screen = new ble.Gif.Screen(
       component.width,
       component.height,

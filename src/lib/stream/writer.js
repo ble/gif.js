@@ -73,6 +73,7 @@ ble.Writer.promote.writeAsciiString = function(ascii) {
 };
 /**
  * @constructor
+ * @implements {ble.Writer}
  * @param {ArrayBuffer} ary
  * @param {number=} opt_start
  * @param {number=} opt_length

@@ -12,6 +12,7 @@ goog.require('goog.dom.DomHelper');
 goog.require('goog.ui.Component');
 goog.require('goog.ui.Button');
 
+goog.provide('ble.demo.scribbleToGif');
 goog.scope(function() {
 /**
  * @constructor
@@ -58,7 +59,7 @@ ble.monochromeGif = function(w, h) {
   var paletteValues = new Uint8Array(6);
   for(var i = 0; i < 6; i++)
     paletteValues[i] = i > 2 ? 255 : 0;
-  var palette = new ble.Gif.Palette(0, 2, paletteValues);
+  var palette = new ble.Gif.Palette(false, 2, paletteValues);
   var screen = new ble.Gif.Screen(w, h, palette, 0, 0, 0);
   var gif = new ble.Gif('89a', screen, []);
   return gif;
@@ -115,7 +116,7 @@ ble.saveDrawing = function(sCanvas, frames) {
   };
   var palette = gif.screen.globalPalette;
   for(var position = 0; position < length; position += millisPerFrame) {
-    console.log(position);
+    window.console.log(position);
 
     var isLast = position + millisPerFrame >= length;
     blocks.push(graphicControl(isLast ? 200 : 2));
@@ -164,16 +165,20 @@ ble.saveDrawing = function(sCanvas, frames) {
   window.console.log("done encoding.");
 };
 
-var ui = new ble.scribble.UI(320, 240);
-var button = new goog.ui.Button("make a gif!");
+ble.demo.scribbleToGif = function() {
+  var ui = new ble.scribble.UI(320, 240);
+  var button = new goog.ui.Button("make a gif!");
 
-ui.render(document.body);
-button.render(document.body);
+  ui.render(document.body);
+  button.render(document.body);
 
-goog.events.listen(
-    button,
-    goog.ui.Component.EventType.ACTION,
-    function() {
-      ble.saveDrawing(ui.canvas, 100);
-    });
+  goog.events.listen(
+      button,
+      goog.ui.Component.EventType.ACTION,
+      function() {
+        ble.saveDrawing(ui.canvas, 100);
+      });
+};
 });
+
+ble.demo.scribbleToGif();

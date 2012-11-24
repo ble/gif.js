@@ -8,7 +8,7 @@ goog.require('goog.events');
 goog.require('goog.testing.stacktrace');
 
 goog.require('ble.Picker');
-goog.require('ble.Gif.describeGif');
+goog.require('ble.gif.describeGif');
 
 var console = window.console;
 var gifPicker = new ble.Picker("../gifs/gifs.json", "../gifs");
@@ -34,51 +34,8 @@ goog.events.listen(
       lastGif = gif;
       dh.removeChildren(descriptionContainer);
       dh.appendChild(descriptionContainer, dh.createDom('h1', null, event.path));
-      dh.appendChild(descriptionContainer, ble.Gif.describeGif(gif));
+      dh.appendChild(descriptionContainer, ble.gif.describeGif(gif));
     });
-//
-//goog.events.listen(
-//    gifList,
-//    goog.ui.Component.EventType.ACTION,
-//    function(event) {
-//      var menuItem = /** @type {goog.ui.MenuItem} */ event.target;
-//      var model = menuItem.getModel();
-//      console.log(model);
-//    });
-/*
-var console = window.console;
-var result = [];
-
-var lastGif = null;
-var lastResult = null;
-var lastBuffer = null;
-
-var testWithGif = function(uriOfGif, functionOfGif) {
-  var decodeAndTest = function() {
-    console.log("testing");
-    try {
-      var buf = this.getResponse();
-      lastBuffer = buf;
-      var reader = new ble.ArrayReader(buf);
-      var gif = new ble.Gif();
-      console.log("Decode success: " + gif.decode(reader).toString());
-      console.log(gif);
-      lastGif = gif;
-      lastResult = functionOfGif(gif);
-    } catch(err) {
-      console.log(err.stack);
-      console.log(goog.testing.stacktrace.parse_(err.stack)); 
-    } 
-    console.log("tested");
-  };
-
-  var xhr = new goog.net.XhrIo();
-  xhr.setResponseType(goog.net.XhrIo.ResponseType.ARRAY_BUFFER);
-  goog.events.listen(xhr, goog.net.EventType.COMPLETE, decodeAndTest);
-  xhr.send(uriOfGif, 'GET');
-};
-*/
-
 /*
  * Take the images out of the first 40 blocks of a gif and see if a roundtrip
  * (encode image, then decode image) produces an identical image.
@@ -151,7 +108,4 @@ var testWithBlobUrl = function(gif) {
   var url = window.webkitURL.createObjectURL(blob);
   document.write(url);
 };
-//testWithGif("../gifs/2BC.gif", testEncodeImages);
-//testWithGif("../gifs/bwanim.gif", testEncodeImages);
-testWithGif("../gifs/bwanim.gif", testWithBlobUrl);
 */
